@@ -1,5 +1,7 @@
 const db = require("../config/db");
 
+// AuthModel for user authentication
+
 exports.findUserByEmail = async (email) => {
   const [rows] = await db.query(
     `
@@ -12,3 +14,4 @@ exports.findUserByEmail = async (email) => {
   );
   return rows.length ? rows[0] : null;
 };
+
