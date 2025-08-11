@@ -29,7 +29,7 @@ const ViewAssignedIncharges = ({ selectedSite }) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.get("http://localhost:5000/material/assigned-incharges");
+      const response = await axios.get("http://3.211.76.159:5000/api/material/assigned-incharges");
       setIncharges(response.data.data || []);
     } catch (error) {
       setError(error.response?.data?.message || "Failed to fetch assigned incharge details.");

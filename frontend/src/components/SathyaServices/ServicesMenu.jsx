@@ -85,7 +85,7 @@ const ServiceMenu = ({ onMenuSelect, activeMenu }) => {
 
     const handleLogout = async () => {
       try {
-        await axios.post("http://localhost:5000/auth/logout");
+        await axios.post("http://3.211.76.159:5000/api/auth/logout");
         localStorage.removeItem("token");
         localStorage.removeItem("encodedUserId");
         localStorage.removeItem("loginTime");
@@ -190,7 +190,7 @@ const ServiceMenu = ({ onMenuSelect, activeMenu }) => {
   const renderMobileMenu = () => {
     const handleLogout = async () => {
       try {
-        await axios.post("http://localhost:5000/auth/logout");
+        await axios.post("http://3.211.76.159:5000/api/auth/logout");
         localStorage.removeItem("token");
         localStorage.removeItem("encodedUserId");
         localStorage.removeItem("loginTime");

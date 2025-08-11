@@ -15,7 +15,7 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post("http://localhost:5000/auth/login", {
+      const response = await axios.post("http://3.211.76.159:5000/api/auth/login", {
         email,
         password,
       });
