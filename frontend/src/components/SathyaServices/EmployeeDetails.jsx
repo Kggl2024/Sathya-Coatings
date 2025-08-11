@@ -42,9 +42,9 @@ const EmployeeDetails = () => {
   const fetchFilterOptions = async () => {
     try {
       const [designationsRes, statusesRes, employeesRes] = await Promise.all([
-        axios.get("http://3.211.76.159:5000/api/material/designations"),
-        axios.get("http://3.211.76.159:5000/api/material/statuses"),
-        axios.get("http://3.211.76.159:5000/api/material/employees"),
+        axios.get("http://3.211.76.159/api/material/designations"),
+        axios.get("http://3.211.76.159/api/material/statuses"),
+        axios.get("http://3.211.76.159/api/material/employees"),
       ]);
       const designations = designationsRes.data.data.map((d) => d.designation);
       const statuses = statusesRes.data.data.map((s) => s.status);
@@ -71,7 +71,7 @@ const EmployeeDetails = () => {
       if (filters.company) params.company = filters.company;
       if (filters.search) params.search = filters.search;
 
-      const response = await axios.get("http://3.211.76.159:5000/api/material/employees", { params });
+      const response = await axios.get("http://3.211.76.159/api/material/employees", { params });
       if (response.data.status === "success") {
         setEmployees(response.data.data || []);
         if (response.data.data.length === 0) {

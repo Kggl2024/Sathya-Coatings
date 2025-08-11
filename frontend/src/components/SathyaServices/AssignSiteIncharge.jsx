@@ -34,7 +34,7 @@ const AssignSiteIncharge = () => {
   const fetchProjects = async () => {
     try {
       setLoading((prev) => ({ ...prev, projects: true }));
-      const response = await axios.get("http://3.211.76.159:5000/api/material/projects");
+      const response = await axios.get("http://3.211.76.159/api/material/projects");
       setProjects(response.data.data || []);
     } catch (error) {
       console.error("Error fetching projects:", error);
@@ -48,7 +48,7 @@ const AssignSiteIncharge = () => {
   const fetchSites = async (pd_id) => {
     try {
       setLoading((prev) => ({ ...prev, sites: true }));
-      const response = await axios.get(`http://3.211.76.159:5000/api/material/sites/${pd_id}`);
+      const response = await axios.get(`http://3.211.76.159/api/material/sites/${pd_id}`);
       setSites(response.data.data || []);
     } catch (error) {
       console.error("Error fetching sites:", error);
@@ -63,7 +63,7 @@ const AssignSiteIncharge = () => {
   const fetchDesignations = async () => {
     try {
       setLoading((prev) => ({ ...prev, designations: true }));
-      const response = await axios.get("http://3.211.76.159:5000/api/material/designations");
+      const response = await axios.get("http://3.211.76.159/api/material/designations");
       setDesignations(response.data.data || []);
     } catch (error) {
       console.error("Error fetching designations:", error);
@@ -80,7 +80,7 @@ const AssignSiteIncharge = () => {
     }
     try {
       setLoading((prev) => ({ ...prev, employees: true }));
-      const response = await axios.get("http://3.211.76.159:5000/api/material/employees", {
+      const response = await axios.get("http://3.211.76.159/api/material/employees", {
         params: { designation_id },
       });
       setEmployeesByDesignation((prev) => ({
@@ -205,7 +205,7 @@ const AssignSiteIncharge = () => {
         emp_id: row.emp_id,
       }));
 
-      await axios.post("http://3.211.76.159:5000/api/material/assign-incharge", payload);
+      await axios.post("http://3.211.76.159/api/material/assign-incharge", payload);
 
       Swal.fire({
         position: "top-end",

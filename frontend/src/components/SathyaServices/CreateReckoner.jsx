@@ -78,7 +78,7 @@ const CreateReckoner = ({ onShowCompanyModal, onShowProjectModal, selectedCompan
       const fetchProjects = async () => {
         try {
           setLoading((prev) => ({ ...prev, projects: true }));
-          const response = await axios.get(`http://3.211.76.159:5000/api/reckoner/projects/${selectedCompanyId}`);
+          const response = await axios.get(`http://3.211.76.159/api/reckoner/projects/${selectedCompanyId}`);
           setProjects(response.data.data || []);
           setSelectedProject("");
           setSites([]);
@@ -115,7 +115,7 @@ const CreateReckoner = ({ onShowCompanyModal, onShowProjectModal, selectedCompan
       const fetchSites = async () => {
         try {
           setLoading((prev) => ({ ...prev, sites: true }));
-          const response = await axios.get(`http://3.211.76.159:5000/api/reckoner/sites-by-project/${selectedProject}`);
+          const response = await axios.get(`http://3.211.76.159/api/reckoner/sites-by-project/${selectedProject}`);
           setSites(response.data.data || []);
           setSelectedSite("");
           setFormData((prev) => ({ ...prev, poNumber: "", siteId: "" }));
@@ -160,15 +160,15 @@ const CreateReckoner = ({ onShowCompanyModal, onShowProjectModal, selectedCompan
     const fetchData = async () => {
       try {
         setLoading((prev) => ({ ...prev, categories: true }));
-        const categoriesRes = await axios.get("http://3.211.76.159:5000/api/reckoner/categories");
+        const categoriesRes = await axios.get("http://3.211.76.159/api/reckoner/categories");
         setCategories(categoriesRes.data.data || []);
 
         setLoading((prev) => ({ ...prev, subcategories: true }));
-        const subcategoriesRes = await axios.get("http://3.211.76.159:5000/api/reckoner/subcategories");
+        const subcategoriesRes = await axios.get("http://3.211.76.159/api/reckoner/subcategories");
         setSubcategories(subcategoriesRes.data.data || []);
 
         setLoading((prev) => ({ ...prev, workItems: true }));
-        const workItemsRes = await axios.get("http://3.211.76.159:5000/api/reckoner/work-items");
+        const workItemsRes = await axios.get("http://3.211.76.159/api/reckoner/work-items");
         setWorkItems(workItemsRes.data.data || []);
       } catch (err) {
         Swal.fire({
@@ -238,7 +238,7 @@ const CreateReckoner = ({ onShowCompanyModal, onShowProjectModal, selectedCompan
       }).then(async (result) => {
         if (result.isConfirmed) {
           try {
-            const response = await axios.post("http://3.211.76.159:5000/api/project/create-project", {
+            const response = await axios.post("http://3.211.76.159/api/project/create-project", {
               company_id: selectedCompanyId,
               project_name: result.value,
             });
@@ -545,7 +545,7 @@ const CreateReckoner = ({ onShowCompanyModal, onShowProjectModal, selectedCompan
   const processSite = async (poNumber) => {
     try {
       setLoading((prev) => ({ ...prev, processing: true }));
-      await axios.get(`http://3.211.76.159:5000/api/sheet/process/${encodeURIComponent(poNumber)}`);
+      await axios.get(`http://3.211.76.159/api/sheet/process/${encodeURIComponent(poNumber)}`);
       return true;
     } catch (error) {
       console.error("Error processing site:", error);
@@ -605,7 +605,7 @@ const CreateReckoner = ({ onShowCompanyModal, onShowProjectModal, selectedCompan
         })),
       };
 
-      await axios.post("http://3.211.76.159:5000/api/reckoner/reckoner", submissionData);
+      await axios.post("http://3.211.76.159/api/reckoner/reckoner", submissionData);
       await processSite(formData.poNumber);
 
       Swal.fire({

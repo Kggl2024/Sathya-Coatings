@@ -24,8 +24,8 @@ const ViewProjects = () => {
         setLoading(true);
         setError(null);
         const [companiesResponse, projectsResponse] = await Promise.all([
-          axios.get("http://3.211.76.159:5000/api/project/companies"),
-          axios.get("http://3.211.76.159:5000/api/project/projects-with-sites"),
+          axios.get("http://3.211.76.159/api/project/companies"),
+          axios.get("http://3.211.76.159/api/project/projects-with-sites"),
         ]);
         setCompanies(companiesResponse.data || []);
         setProjects(projectsResponse.data || []);

@@ -23,7 +23,7 @@ const ExpenseDetails = () => {
     const fetchProjects = async () => {
       try {
         setLoading(true);
-        const response = await axios.get("http://3.211.76.159:5000/api/material/projects");
+        const response = await axios.get("http://3.211.76.159/api/material/projects");
         setProjects(Array.isArray(response.data.data) ? response.data.data : []);
       } catch (error) {
         console.error("Error fetching projects:", error);
@@ -41,7 +41,7 @@ const ExpenseDetails = () => {
       const fetchSites = async () => {
         try {
           setLoading(true);
-          const response = await axios.get(`http://3.211.76.159:5000/api/material/sites/${formData.pd_id}`);
+          const response = await axios.get(`http://3.211.76.159/api/material/sites/${formData.pd_id}`);
           setSites(Array.isArray(response.data.data) ? response.data.data : []);
         } catch (error) {
           console.error("Error fetching sites:", error);
@@ -62,7 +62,7 @@ const ExpenseDetails = () => {
     const fetchPettyCash = async () => {
       try {
         setLoading(true);
-        const response = await axios.get("http://3.211.76.159:5000/api/expense/fetch-petty-cash");
+        const response = await axios.get("http://3.211.76.159/api/expense/fetch-petty-cash");
         const records = Array.isArray(response.data.data)
           ? response.data.data.map((record) => ({
               ...record,
@@ -108,12 +108,12 @@ const ExpenseDetails = () => {
 
       const token = localStorage.getItem("token");
       await axios.post(
-        "http://3.211.76.159:5000/api/expense/add-petty-cash",
+        "http://3.211.76.159/api/expense/add-petty-cash",
         [{ pd_id, site_id, assign_date, amount: parsedAmount }],
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      const response = await axios.get("http://3.211.76.159:5000/api/expense/fetch-petty-cash");
+      const response = await axios.get("http://3.211.76.159/api/expense/fetch-petty-cash");
       const records = Array.isArray(response.data.data)
         ? response.data.data.map((record) => ({
             ...record,
