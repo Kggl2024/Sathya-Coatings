@@ -1,5 +1,7 @@
 const db = require("../config/db");
 
+// ProjectModel for project management
+
 exports.getLocationId = async (location_name) => {
   const [rows] = await db.query(
     "SELECT location_id FROM location WHERE location_name = ?",
