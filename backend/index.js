@@ -8,6 +8,8 @@ const sheetRoutes = require("./routes/sheetRoutes");
 const authRoutes = require("./routes/authRoute")
 const materialRoutes = require("./routes/materialRoutes")
 const expenseRoutes = require("./routes/expenseRoutes")
+const SiteInchargeRoutes = require("./routes/SiteInchargeRoutes")
+
 const app = express();
 
 // Middleware
@@ -35,6 +37,7 @@ const startServer = async () => {
         app.use("/sheet",sheetRoutes);
         app.use("/material",materialRoutes)
         app.use("/expense",expenseRoutes)
+        app.use("/site-incharge",SiteInchargeRoutes)
         
         app.listen(process.env.PORT || 5000, () => 
             console.log(`Server running on port ${process.env.PORT || 5000}`)

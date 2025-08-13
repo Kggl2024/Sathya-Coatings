@@ -891,16 +891,19 @@ exports.getAllReckonerWithStatus = async () => {
               isc.subcategory_name,
               pr.item_id,
               wd.desc_name AS work_descriptions,
-              cs.completion_id,
-              cs.area_completed,
-              cs.rate AS completion_rate,
-              cs.value AS completion_value,
-              cs.billed_area,
-              cs.billed_value,
-              cs.balance_area,
-              cs.balance_value,
-              cs.work_status,
-              cs.billing_status
+              wc.completion_id,
+              wc.area_completed,
+              wc.rate AS completion_rate,
+              wc.value AS completion_value,
+              wc.billed_area,
+              wc.billed_value,
+              wc.balance_area,
+              wc.balance_value,
+              wc.work_status,
+              wc.billing_status,
+              wc.created_by,
+              wc.updated_at,
+              u.user_name AS created_by_name
           FROM 
               po_reckoner pr
           LEFT JOIN 
@@ -912,7 +915,9 @@ exports.getAllReckonerWithStatus = async () => {
           LEFT JOIN 
               work_descriptions wd ON pr.desc_id = wd.desc_id
           LEFT JOIN 
-              completion_status cs ON pr.rec_id = cs.rec_id
+              completion_status wc ON pr.rec_id = wc.rec_id
+          LEFT JOIN 
+              users u ON wc.created_by = u.user_id
           ORDER BY pr.rec_id DESC
       `);
     return results;
@@ -973,11 +978,48 @@ exports.getReckonerByPoNumberWithStatus = async (poNumber) => {
   }
 };
 
+exports.checkRecIdExistsInPO = async (rec_id) => {
+  const [rows] = await db.query(
+    "SELECT rec_id FROM po_reckoner WHERE rec_id = ?",
+    [rec_id]
+  );
+  return rows.length > 0; // Returns true if found, false if not
+};
+
+// Existing updateCompletionStatus function...
 exports.updateCompletionStatus = async (rec_id, updateData) => {
   const connection = await db.getConnection();
   try {
     await connection.beginTransaction();
-    const query = `
+
+    const [existing] = await connection.query(
+      "SELECT rec_id FROM completion_status WHERE rec_id = ?",
+      [rec_id]
+    );
+
+    if (existing.length === 0) {
+      // Insert
+      const insertQuery = `
+        INSERT INTO completion_status 
+        (rec_id, area_completed, rate, value, billed_area, billed_value, balance_area, balance_value, work_status, billing_status, created_by, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+      `;
+      await connection.query(insertQuery, [
+        rec_id,
+        updateData.area_completed || 0,
+        updateData.rate || 0,
+        updateData.value || 0,
+        updateData.billed_area || 0,
+        updateData.billed_value || 0,
+        updateData.balance_area || 0,
+        updateData.balance_value || 0,
+        updateData.work_status || "In Progress",
+        updateData.billing_status || "Not Billed",
+        updateData.created_by, // Store created_by
+      ]);
+    } else {
+      // Update
+      const updateQuery = `
         UPDATE completion_status 
         SET 
           area_completed = ?,
@@ -988,21 +1030,26 @@ exports.updateCompletionStatus = async (rec_id, updateData) => {
           balance_area = ?,
           balance_value = ?,
           work_status = ?,
-          billing_status = ?
+          billing_status = ?,
+          created_by = ?,
+          updated_at = NOW()
         WHERE rec_id = ?
       `;
-    await connection.query(query, [
-      updateData.area_completed,
-      updateData.rate,
-      updateData.value,
-      updateData.billed_area,
-      updateData.billed_value,
-      updateData.balance_area,
-      updateData.balance_value,
-      updateData.work_status,
-      updateData.billing_status,
-      rec_id,
-    ]);
+      await connection.query(updateQuery, [
+        updateData.area_completed,
+        updateData.rate,
+        updateData.value,
+        updateData.billed_area,
+        updateData.billed_value,
+        updateData.balance_area,
+        updateData.balance_value,
+        updateData.work_status,
+        updateData.billing_status,
+        updateData.created_by, // Update created_by
+        rec_id,
+      ]);
+    }
+
     await connection.commit();
   } catch (error) {
     await connection.rollback();
@@ -1011,6 +1058,7 @@ exports.updateCompletionStatus = async (rec_id, updateData) => {
     connection.release();
   }
 };
+
 
 exports.checkPoReckonerExists = async (site_id) => {
   try {

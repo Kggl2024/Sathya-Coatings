@@ -817,28 +817,43 @@ exports.updateCompletionStatus = async (req, res) => {
       balance_value,
       work_status,
       billing_status,
+      created_by, // Expect created_by from the request body
     } = req.body;
 
     if (!rec_id) return errorResponse(res, "Record ID is required", 400);
+    if (!created_by) return errorResponse(res, "Created by ID is required", 400);
+
+    // ✅ Call model method instead of writing raw query here
+    const recExists = await reckonerModel.checkRecIdExistsInPO(rec_id);
+    if (!recExists) {
+      return errorResponse(
+        res,
+        `Invalid rec_id (${rec_id}): does not exist in po_reckoner`,
+        400
+      );
+    }
 
     const updateData = {
-      area_completed: parseFloat(area_completed) || null,
-      rate: parseFloat(rate) || null,
-      value: parseFloat(value) || null,
-      billed_area: parseFloat(billed_area) || null,
-      billed_value: parseFloat(billed_value) || null,
-      balance_area: parseFloat(balance_area) || null,
-      balance_value: parseFloat(balance_value) || null,
-      work_status: work_status || null,
-      billing_status: billing_status || null,
+      area_completed: parseFloat(area_completed) || 0,
+      rate: parseFloat(rate) || 0,
+      value: parseFloat(value) || 0,
+      billed_area: parseFloat(billed_area) || 0,
+      billed_value: parseFloat(billed_value) || 0,
+      balance_area: parseFloat(balance_area) || 0,
+      balance_value: parseFloat(balance_value) || 0,
+      work_status: work_status || 'In Progress',
+      billing_status: billing_status || 'Not Billed',
+      created_by, // Use the provided created_by
     };
 
     await reckonerModel.updateCompletionStatus(rec_id, updateData);
+
     successResponse(res, null, "Completion status updated successfully");
   } catch (error) {
     errorResponse(res, "Error updating completion status", 500, error);
   }
 };
+
 
 exports.checkPoReckoner = async (req, res) => {
   try {

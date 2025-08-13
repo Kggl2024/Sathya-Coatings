@@ -38,7 +38,7 @@ router.get(
   reckonerController.getReckonerByPoNumberWithStatus
 );
 
-router.patch(
+router.put(
   "/completion_status/:rec_id",
   reckonerController.updateCompletionStatus
 );
