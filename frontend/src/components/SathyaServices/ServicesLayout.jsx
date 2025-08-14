@@ -137,7 +137,7 @@ const ServicesLayout = ({ activeMenu, onCompanySelect, selectedCompanyId }) => {
   };
 
   return (
-    <div className="flex-1 p-2 sm:p-4 overflow-auto w-full">
+    <div className="flex-1 pt-16 p-2 overflow-auto w-full">
       <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 max-w-full mx-auto border border-gray-200">
         {renderActiveView()}
       </div>
