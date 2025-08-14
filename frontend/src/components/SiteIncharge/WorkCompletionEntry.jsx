@@ -41,7 +41,7 @@ const WorkCompletionEntry = () => {
   const fetchSites = async () => {
     try {
       setLoadingSites(true);
-      const res = await axios.get("http://3.211.76.159/api/reckoner/sites");
+      const res = await axios.get("http://103.118.158.33/api/reckoner/sites");
       if (res.data.success && Array.isArray(res.data.data)) {
         const options = res.data.data.map((site) => ({
           site_id: site.site_id,
@@ -65,7 +65,7 @@ const WorkCompletionEntry = () => {
   const fetchReckonerData = async () => {
     try {
       setLoading(true);
-      const res = await axios.get("http://3.211.76.159/api/reckoner/reckoner/");
+      const res = await axios.get("http://103.118.158.33/api/reckoner/reckoner/");
       const data =
         res.data.success && Array.isArray(res.data.data) ? res.data.data : [];
       const uniqueData = Array.from(
@@ -152,7 +152,7 @@ const WorkCompletionEntry = () => {
       };
 
       await axios.post(
-        "http://3.211.76.159/api/site-incharge/completion-status",
+        "http://103.118.158.33/api/site-incharge/completion-status",
         payload
       );
 

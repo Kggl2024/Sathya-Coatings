@@ -90,7 +90,7 @@ const DisplayReckoner = () => {
   const fetchSites = async () => {
     try {
       setLoadingSites(true);
-      const res = await axios.get("http://3.211.76.159/api/reckoner/sites");
+      const res = await axios.get("http://103.118.158.33/api/reckoner/sites");
       if (res.data.success) {
         const options = res.data.data.map((site) => ({
           po_number: site.po_number,
@@ -136,7 +136,7 @@ const DisplayReckoner = () => {
     try {
       setLoadingSite(true);
       const res = await axios.get(
-        `http://3.211.76.159/api/reckoner/sites/${poNumber}`
+        `http://103.118.158.33/api/reckoner/sites/${poNumber}`
       );
       if (res.data.success) {
         setSiteInfo(res.data.data);
@@ -194,7 +194,7 @@ const DisplayReckoner = () => {
   const fetchReckonerData = async () => {
     try {
       setLoading(true);
-      const res = await axios.get("http://3.211.76.159/api/reckoner/reckoner/");
+      const res = await axios.get("http://103.118.158.33/api/reckoner/reckoner/");
       const data = res.data.success ? res.data.data : [];
       setReckonerData(data);
       if (selectedSite) {
@@ -266,7 +266,7 @@ const DisplayReckoner = () => {
     try {
       setSubmitting(true);
       await axios.patch(
-        `http://3.211.76.159/api/reckoner/completion_status/${rec_id}`,
+        `http://103.118.158.33/api/reckoner/completion_status/${rec_id}`,
         editingData
       );
       showAlert("success", "Data updated successfully");

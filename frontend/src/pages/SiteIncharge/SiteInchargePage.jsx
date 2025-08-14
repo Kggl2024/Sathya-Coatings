@@ -25,7 +25,7 @@ const SiteInchargePage = () => {
       }
 
       try {
-        const response = await axios.post("http://3.211.76.159/api/auth/verify-token", { token });
+        const response = await axios.post("http://103.118.158.33/api/auth/verify-token", { token });
         setUser(response.data);
         sessionStorage.setItem('user', JSON.stringify(response.data));
       } catch (error) {
@@ -62,7 +62,7 @@ const SiteInchargePage = () => {
 
   const handleLogout = async () => {
     try {
-      await axios.post("http://3.211.76.159/api/auth/logout");
+      await axios.post("http://103.118.158.33/api/auth/logout");
       localStorage.removeItem("token");
       localStorage.removeItem("encodedUserId");
       localStorage.removeItem("loginTime");

@@ -38,7 +38,7 @@ const ProtectedRoute = ({ children, role }) => {
       }
 
       try {
-        const response = await axios.post("http://3.211.76.159/api/auth/verify-token", { token });
+        const response = await axios.post("http://103.118.158.33/api/auth/verify-token", { token });
         const { role: userRole } = response.data;
 
         if (userRole !== role) {

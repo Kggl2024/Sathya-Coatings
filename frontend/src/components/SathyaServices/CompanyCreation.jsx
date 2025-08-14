@@ -24,7 +24,7 @@ const CompanyCreation = ({ onCompanyCreated, onClose }) => {
     setError(null);
 
     try {
-      await axios.post("http://3.211.76.159/api/project/create-company", formData);
+      await axios.post("http://103.118.158.33/api/project/create-company", formData);
       setFormData({ company_name: "", address: "", spoc_name: "", spoc_contact_no: "" });
       onCompanyCreated();
     } catch (error) {

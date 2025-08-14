@@ -29,11 +29,11 @@ const ProjectCreation = ({ companyId, onClose, onProjectCreated }) => {
   const fetchData = async () => {
     try {
       const [companyResponse, siteInchargesResponse, projectsResponse, locationsResponse, reckonerTypesResponse] = await Promise.all([
-        axios.get(`http://3.211.76.159/api/project/companies/${companyId}`),
-        axios.get("http://3.211.76.159/api/project/site-incharges"),
-        axios.get(`http://3.211.76.159/api/project/projects/${companyId}`),
-        axios.get(`http://3.211.76.159/api/project/locations`),
-        axios.get(`http://3.211.76.159/api/project/reckoner-types`),
+        axios.get(`http://103.118.158.33/api/project/companies/${companyId}`),
+        axios.get("http://103.118.158.33/api/project/site-incharges"),
+        axios.get(`http://103.118.158.33/api/project/projects/${companyId}`),
+        axios.get(`http://103.118.158.33/api/project/locations`),
+        axios.get(`http://103.118.158.33/api/project/reckoner-types`),
       ]);
       setCompanyName(companyResponse.data.company_name || "Unknown Company");
       setSiteIncharges(siteInchargesResponse.data || []);
@@ -60,7 +60,7 @@ const ProjectCreation = ({ companyId, onClose, onProjectCreated }) => {
         if (!isCustomPoNumber) {
           try {
             console.log(`Fetching PO number for reckoner_type_id: ${formData.reckoner_type_id}`);
-            const response = await axios.get(`http://3.211.76.159/api/project/next-po-number/${formData.reckoner_type_id}`);
+            const response = await axios.get(`http://103.118.158.33/api/project/next-po-number/${formData.reckoner_type_id}`);
             console.log("PO number response:", response.data);
             setFormData((prev) => ({ ...prev, po_number: response.data.po_number }));
           } catch (error) {
@@ -145,7 +145,7 @@ const ProjectCreation = ({ companyId, onClose, onProjectCreated }) => {
         throw new Error("Either location_id or new_location_name is required");
       }
 
-      const response = await axios.post("http://3.211.76.159/api/project/create-project-site", projectData);
+      const response = await axios.post("http://103.118.158.33/api/project/create-project-site", projectData);
       console.log("Project creation response:", response.data);
 
       setFormData({

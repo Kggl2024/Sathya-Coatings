@@ -17,9 +17,9 @@ function App() {
         <Route
             path="/admin/:encodedUserId"
             element={
-              <ProtectedRoute role="admin">
+              // <ProtectedRoute role="admin">
                 <AdminPage />
-              </ProtectedRoute>
+              // </ProtectedRoute>
             }
           />
 
@@ -28,9 +28,9 @@ function App() {
           <Route
             path="/site-incharge/:encodedUserId"
             element={
-              <ProtectedRoute role="site incharge">
+              // <ProtectedRoute role="site incharge">
                 <SiteInchargePage />
-              </ProtectedRoute>
+              // </ProtectedRoute>
             }
           />
 

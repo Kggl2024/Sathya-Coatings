@@ -35,8 +35,8 @@ const SiteInformation = () => {
         setLoading(true);
         setError(null);
         const [companiesResponse, projectsResponse] = await Promise.all([
-          axios.get("http://3.211.76.159/api/project/companies"),
-          axios.get("http://3.211.76.159/api/project/projects-with-sites"),
+          axios.get("http://103.118.158.33/api/project/companies"),
+          axios.get("http://103.118.158.33/api/project/projects-with-sites"),
         ]);
         setCompanies(companiesResponse.data || []);
         setProjects(projectsResponse.data || []);
@@ -95,7 +95,7 @@ const SiteInformation = () => {
     }
 
     try {
-      await axios.put(`http://3.211.76.159/api/project/companies`, {
+      await axios.put(`http://103.118.158.33/api/project/companies`, {
         ...formData,
         location_name: null,
       });
@@ -113,7 +113,7 @@ const SiteInformation = () => {
         spoc_name: "",
         spoc_contact_no: "",
       });
-      const response = await axios.get("http://3.211.76.159/api/project/companies");
+      const response = await axios.get("http://103.118.158.33/api/project/companies");
       setCompanies(response.data || []);
     } catch (error) {
       console.error("Error updating company:", error);
