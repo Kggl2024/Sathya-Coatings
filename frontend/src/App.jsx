@@ -3,6 +3,7 @@ import Login from "./pages/Login/Login";
 import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute";
 import AdminPage from "./pages/Admin/AdminPage";
 import SiteInchargePage from "./pages/SiteIncharge/SiteInchargePage";
+import AdminDashboardMain from "./components/AdminDashboard/AdminDashboardMain";
 
 function App() {
 
@@ -22,6 +23,13 @@ function App() {
               // </ProtectedRoute>
             }
           />
+
+        <Route 
+           path="/admin/analytics"
+           element= {
+            <AdminDashboardMain />
+           }
+        />
 
           
         {/* Site Incharge */}
