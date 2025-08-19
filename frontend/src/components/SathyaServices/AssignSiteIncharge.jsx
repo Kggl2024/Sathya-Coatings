@@ -7,22 +7,19 @@ import AddEmployee from "./AddEmployee";
 const AssignSiteIncharge = () => {
   const [projects, setProjects] = useState([]);
   const [sites, setSites] = useState([]);
-  const [designations, setDesignations] = useState([]);
-  const [employeesByDesignation, setEmployeesByDesignation] = useState({});
+  const [employees, setEmployees] = useState([]);
   const [selectedProject, setSelectedProject] = useState("");
   const [selectedSite, setSelectedSite] = useState("");
   const [rows, setRows] = useState([
     {
       from_date: "",
       to_date: "",
-      designation_id: "",
       emp_id: "",
     },
   ]);
   const [loading, setLoading] = useState({
     projects: false,
     sites: false,
-    designations: false,
     employees: false,
     submitting: false,
     addingEmployee: false,
@@ -59,39 +56,17 @@ const AssignSiteIncharge = () => {
     }
   };
 
-  // Fetch designations
-  const fetchDesignations = async () => {
-    try {
-      setLoading((prev) => ({ ...prev, designations: true }));
-      const response = await axios.get("http://localhost:5000/material/designations");
-      setDesignations(response.data.data || []);
-    } catch (error) {
-      console.error("Error fetching designations:", error);
-      setError("Failed to load designations. Please try again.");
-    } finally {
-      setLoading((prev) => ({ ...prev, designations: false }));
-    }
-  };
-
-  // Fetch employees for a specific designation_id
-  const fetchEmployees = async (designation_id) => {
-    if (!designation_id || employeesByDesignation[designation_id]) {
-      return;
-    }
+  // Fetch all employees
+  const fetchEmployees = async () => {
     try {
       setLoading((prev) => ({ ...prev, employees: true }));
-      const response = await axios.get("http://localhost:5000/material/employees", {
-        params: { designation_id },
-      });
-      setEmployeesByDesignation((prev) => ({
-        ...prev,
-        [designation_id]: response.data.data || [],
-      }));
+      const response = await axios.get("http://localhost:5000/material/employees");
+      setEmployees(response.data.data || []);
       if (response.data.data.length === 0) {
-        setError(`No employees found for the selected designation. Please add an employee or select another designation.`);
+        setError("No employees found. Please add an employee.");
       }
     } catch (error) {
-      console.error(`Error fetching employees for designation_id ${designation_id}:`, error);
+      console.error("Error fetching employees:", error);
       setError("Failed to load employees. Please try again.");
     } finally {
       setLoading((prev) => ({ ...prev, employees: false }));
@@ -100,7 +75,7 @@ const AssignSiteIncharge = () => {
 
   useEffect(() => {
     fetchProjects();
-    fetchDesignations();
+    fetchEmployees();
   }, []);
 
   // Handle project selection
@@ -108,7 +83,7 @@ const AssignSiteIncharge = () => {
     const pd_id = e.target.value;
     setSelectedProject(pd_id);
     setSelectedSite("");
-    setRows([{ from_date: "", to_date: "", designation_id: "", emp_id: "" }]);
+    setRows([{ from_date: "", to_date: "", emp_id: "" }]);
     setError(null);
     if (pd_id) {
       await fetchSites(pd_id);
@@ -120,7 +95,7 @@ const AssignSiteIncharge = () => {
   // Handle site selection
   const handleSiteChange = (e) => {
     setSelectedSite(e.target.value);
-    setRows([{ from_date: "", to_date: "", designation_id: "", emp_id: "" }]);
+    setRows([{ from_date: "", to_date: "", emp_id: "" }]);
     setError(null);
   };
 
@@ -129,14 +104,6 @@ const AssignSiteIncharge = () => {
     const { name, value } = e.target;
     const updatedRows = [...rows];
     updatedRows[index] = { ...updatedRows[index], [name]: value };
-
-    if (name === "designation_id" && value !== rows[index].designation_id) {
-      updatedRows[index].emp_id = "";
-      if (value) {
-        await fetchEmployees(value);
-      }
-    }
-
     setRows(updatedRows);
     setError(null);
   };
@@ -148,7 +115,6 @@ const AssignSiteIncharge = () => {
       {
         from_date: "",
         to_date: "",
-        designation_id: "",
         emp_id: "",
       },
     ]);
@@ -188,7 +154,6 @@ const AssignSiteIncharge = () => {
         if (row.from_date && row.to_date && new Date(row.to_date) < new Date(row.from_date)) {
           validationErrors.push(`Row ${index + 1}: To Date must be after From Date`);
         }
-        if (!row.designation_id) validationErrors.push(`Row ${index + 1}: Designation is required`);
         if (!row.emp_id) validationErrors.push(`Row ${index + 1}: Incharge Name is required`);
       });
 
@@ -218,7 +183,7 @@ const AssignSiteIncharge = () => {
         iconColor: "#10b981",
       });
 
-      setRows([{ from_date: "", to_date: "", designation_id: "", emp_id: "" }]);
+      setRows([{ from_date: "", to_date: "", emp_id: "" }]);
       setSelectedProject("");
       setSelectedSite("");
       setSites([]);
@@ -231,27 +196,11 @@ const AssignSiteIncharge = () => {
   };
 
   // Handle saving new employee
-  const handleSaveEmployee = (newEmployeeData, designation) => {
-    const { emp_id, full_name, designation_id } = newEmployeeData;
-    setEmployeesByDesignation((prev) => ({
-      ...prev,
-      [designation_id]: [...(prev[designation_id] || []), { emp_id, full_name }],
-    }));
-
-    setDesignations((prev) => {
-      if (!prev.some((d) => d.id === designation_id)) {
-        return [...prev, { id: designation_id, designation }];
-      }
-      return prev;
-    });
-
+  const handleSaveEmployee = (newEmployeeData) => {
+    const { emp_id, full_name } = newEmployeeData;
+    setEmployees((prev) => [...prev, { emp_id, full_name }]);
     setShowEditModal(false);
     setLoading((prev) => ({ ...prev, addingEmployee: false }));
-  };
-
-  // Filter employees based on selected designation_id
-  const getFilteredEmployees = (designation_id) => {
-    return employeesByDesignation[designation_id] || [];
   };
 
   // Check if form fields should be enabled
@@ -264,10 +213,9 @@ const AssignSiteIncharge = () => {
           <p className="text-3xl sm:text-4xl font-bold text-gray-800 mb-2">
             Assign Site Incharge
           </p>
-         
         </div>
 
-        {loading.projects || loading.designations ? (
+        {loading.projects || loading.employees ? (
           <div className="flex justify-center items-center py-16">
             <div className="flex flex-col items-center space-y-3">
               <Loader2 className="h-10 w-10 text-blue-600 animate-spin" />
@@ -304,7 +252,6 @@ const AssignSiteIncharge = () => {
                   </select>
                 </div>
               </div>
-              
               <div className="space-y-1">
                 <label className="block text-sm font-medium text-gray-700">Select Site</label>
                 <div className="relative">
@@ -341,9 +288,6 @@ const AssignSiteIncharge = () => {
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       To Date
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Designation
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Incharge
@@ -385,23 +329,6 @@ const AssignSiteIncharge = () => {
                         />
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
-                        <select
-                          name="designation_id"
-                          value={row.designation_id}
-                          onChange={(e) => handleInputChange(index, e)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-50"
-                          required
-                          disabled={!isFormEnabled}
-                        >
-                          <option value="">Select</option>
-                          {designations.map((des) => (
-                            <option key={des.id} value={des.id}>
-                              {des.designation || "N/A"}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
                         <div className="flex items-center space-x-2">
                           <select
                             name="emp_id"
@@ -409,22 +336,22 @@ const AssignSiteIncharge = () => {
                             onChange={(e) => handleInputChange(index, e)}
                             className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-50"
                             required
-                            disabled={!isFormEnabled || !row.designation_id || loading.employees}
+                            disabled={!isFormEnabled || loading.employees}
                           >
                             <option value="">Select</option>
-                            {getFilteredEmployees(row.designation_id).length === 0 && row.designation_id ? (
+                            {employees.length === 0 ? (
                               <option value="" disabled>
                                 No employees found
                               </option>
                             ) : (
-                              getFilteredEmployees(row.designation_id).map((employee) => (
+                              employees.map((employee) => (
                                 <option key={employee.emp_id} value={employee.emp_id}>
                                   {employee.full_name || "N/A"}
                                 </option>
                               ))
                             )}
                           </select>
-                          {loading.employees && row.designation_id && (
+                          {loading.employees && (
                             <Loader2 className="h-4 w-4 text-blue-600 animate-spin" />
                           )}
                           <button

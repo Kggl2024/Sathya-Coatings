@@ -469,6 +469,57 @@ exports.addEmployee = async (req, res) => {
   }
 };
 
+
+// exports.getAssignedIncharges = async (req, res) => {
+//   try {
+//     const [rows] = await db.query(`
+//       SELECT 
+//         sia.id,
+//         sia.pd_id,
+//         COALESCE(pd.project_name, 'Unknown') AS project_name,
+//         sia.site_id,
+//         COALESCE(sd.site_name, 'Unknown') AS site_name,
+//         COALESCE(sd.po_number, 'Unknown') AS po_number,
+//         sia.emp_id,
+//         COALESCE(em.full_name, 'Unknown') AS full_name,
+//         COALESCE(edg.designation, 'Unknown') AS designation,
+//         COALESCE(em.mobile, 'Unknown') AS mobile,
+//         COALESCE(es.status, 'Unknown') AS status,
+//         sia.from_date,
+//         sia.to_date
+//       FROM siteincharge_assign sia
+//       LEFT JOIN project_details pd ON sia.pd_id = pd.pd_id
+//       LEFT JOIN site_details sd ON sia.site_id = sd.site_id
+//       LEFT JOIN employee_master em ON sia.emp_id = em.emp_id
+//       LEFT JOIN emp_designation edg ON em.designation_id = edg.id
+//       LEFT JOIN emp_status es ON em.status_id = es.id
+//       ORDER BY sia.from_date DESC
+//     `);
+
+//     if (!rows || rows.length === 0) {
+//       return res.status(200).json({
+//         status: 'success',
+//         message: 'No assigned incharges found',
+//         data: []
+//       });
+//     }
+
+//     res.status(200).json({
+//       status: 'success',
+//       message: 'Assigned incharges fetched successfully',
+//       data: rows
+//     });
+//   } catch (error) {
+//     console.error('Error fetching assigned incharges:', error.message, error.stack);
+//     res.status(500).json({
+//       status: 'error',
+//       message: 'Failed to fetch assigned incharge details',
+//       error: error.message
+//     });
+//   }
+// };
+
+
 exports.getAssignedIncharges = async (req, res) => {
   try {
     const [rows] = await db.query(`
@@ -485,13 +536,19 @@ exports.getAssignedIncharges = async (req, res) => {
         COALESCE(em.mobile, 'Unknown') AS mobile,
         COALESCE(es.status, 'Unknown') AS status,
         sia.from_date,
-        sia.to_date
+        sia.to_date,
+        COALESCE(em.company_email, 'Unknown') AS company_email,
+        COALESCE(em.current_address, 'Unknown') AS current_address,
+        COALESCE(em.permanent_address, 'Unknown') AS permanent_address,
+        COALESCE(em.dept_id, 'Unknown') AS dept_id,
+        COALESCE(ed.department, 'Unknown') AS department
       FROM siteincharge_assign sia
       LEFT JOIN project_details pd ON sia.pd_id = pd.pd_id
       LEFT JOIN site_details sd ON sia.site_id = sd.site_id
       LEFT JOIN employee_master em ON sia.emp_id = em.emp_id
       LEFT JOIN emp_designation edg ON em.designation_id = edg.id
       LEFT JOIN emp_status es ON em.status_id = es.id
+      LEFT JOIN emp_department ed ON em.dept_id = ed.id
       ORDER BY sia.from_date DESC
     `);
 
@@ -517,6 +574,7 @@ exports.getAssignedIncharges = async (req, res) => {
     });
   }
 };
+
 
 exports.fetchGenders = async (req, res) => {
   try {

@@ -41,16 +41,39 @@ exports.insertCompany = async (
   company_id,
   company_name,
   address,
-  location_id,
+  gst_number,
+  vendor_code,
+  city_id,
+  state_id,
+  pincode,
   spoc_name,
   spoc_contact_no
 ) => {
   await db.query(
-    "INSERT INTO company (company_id, company_name, address, location_id, spoc_name, spoc_contact_no) VALUES (?, ?, ?, ?, ?, ?)",
-    [company_id, company_name, address, location_id, spoc_name, spoc_contact_no]
+    "INSERT INTO company (company_id, company_name, address, gst_number, vendor_code, city_id, state_id, pincode, spoc_name, spoc_contact_no, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
+    [company_id, company_name, address, gst_number, vendor_code, city_id, state_id, pincode, spoc_name, spoc_contact_no]
   );
 };
 
+exports.getStates = async () => {
+  const [rows] = await db.query("SELECT * FROM `state`");
+  return rows;
+};
+
+exports.getCities = async () => {
+  const [rows] = await db.query("SELECT * FROM city");
+  return rows;
+};
+
+exports.addState = async (state_name) => {
+  const [result] = await db.query("INSERT INTO `state` (state_name) VALUES (?)", [state_name]);
+  return result.insertId;
+};
+
+exports.addCity = async (city_name) => {
+  const [result] = await db.query("INSERT INTO city (city_name) VALUES (?)", [city_name]);
+  return result.insertId;
+};
 exports.fetchCompanyById = async (company_id) => {
   const [rows] = await db.query(
     `

@@ -19,14 +19,14 @@ function App() {
             element={
               <ProtectedRoute role="admin">
                 <AdminPage />
-              </ProtectedRoute>
+             </ProtectedRoute>
             }
           />
         {/* Site Incharge */}
           <Route
             path="/site-incharge/:encodedUserId"
             element={
-              <ProtectedRoute role="site incharge">
+               <ProtectedRoute role="site incharge">
                 <SiteInchargePage />
               </ProtectedRoute>
             }
