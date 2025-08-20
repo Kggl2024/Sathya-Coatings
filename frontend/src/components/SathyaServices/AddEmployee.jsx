@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Loader2, X, Save, UserPlus, User, Building, Calendar, Mail, Phone, MapPin, Users, Briefcase } from "lucide-react";
+import { Loader2, X, Save, UserPlus, User, Building, Calendar, Mail, Phone, MapPin, Users, Briefcase, FileText } from "lucide-react";
 import Swal from "sweetalert2";
 
 const AddEmployee = ({ isOpen, onClose, onSave, isAddingEmployee, saveToDatabase = true }) => {
@@ -20,6 +20,8 @@ const AddEmployee = ({ isOpen, onClose, onSave, isAddingEmployee, saveToDatabase
     company_email: "",
     current_address: "",
     permanent_address: "",
+    esic_number: "", // Added esic_number
+    pf_number: "", // Added pf_number
   });
 
   const [errors, setErrors] = useState({});
@@ -99,6 +101,8 @@ const AddEmployee = ({ isOpen, onClose, onSave, isAddingEmployee, saveToDatabase
     const mobileRegex = /^(?:\+91)?\d{10}$/;
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    const esicRegex = /^\d{17}$/;
+    const pfRegex = /^[A-Z]{2}\/[0-9]{5}\/[0-9]{7}\/[0-9]{3}\/[0-9]{7}$/;
 
     if (!formData.emp_id) newErrors.emp_id = "Employee ID is required";
     if (!formData.full_name) newErrors.full_name = "Full Name is required";
@@ -119,6 +123,7 @@ const AddEmployee = ({ isOpen, onClose, onSave, isAddingEmployee, saveToDatabase
     else if (!emailRegex.test(formData.company_email)) newErrors.company_email = "Invalid email format";
     if (!formData.current_address) newErrors.current_address = "Current Address is required";
     if (!formData.permanent_address) newErrors.permanent_address = "Permanent Address is required";
+   
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -182,6 +187,8 @@ const AddEmployee = ({ isOpen, onClose, onSave, isAddingEmployee, saveToDatabase
         company_email: "",
         current_address: "",
         permanent_address: "",
+        esic_number: "", // Reset esic_number
+        pf_number: "", // Reset pf_number
       });
     } catch (error) {
       console.error("Error adding employee:", error.response?.data || error);
@@ -195,7 +202,7 @@ const AddEmployee = ({ isOpen, onClose, onSave, isAddingEmployee, saveToDatabase
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0  flex items-center justify-center z-50 p-4" onClick={onClose}>
+    <div className="fixed inset-0 flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div
         className="w-full max-w-4xl bg-white rounded-xl shadow-2xl p-6 max-h-[80vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
@@ -263,6 +270,20 @@ const AddEmployee = ({ isOpen, onClose, onSave, isAddingEmployee, saveToDatabase
               { label: "Mobile", name: "mobile", type: "text", placeholder: "e.g., +919876543210", icon: Phone },
               { label: "Company Email", name: "company_email", type: "email", placeholder: "e.g., name@company.com", icon: Mail },
               {
+                label: "ESIC Number",
+                name: "esic_number",
+                type: "text",
+                placeholder: "e.g., 12345678901234567",
+                icon: FileText,
+              },
+              {
+                label: "PF Number",
+                name: "pf_number",
+                type: "text",
+                placeholder: "e.g., TN/MAS/1234567/123/1234567",
+                icon: FileText,
+              },
+              {
                 label: "Current Address",
                 name: "current_address",
                 type: "textarea",
@@ -324,7 +345,7 @@ const AddEmployee = ({ isOpen, onClose, onSave, isAddingEmployee, saveToDatabase
                     placeholder={field.placeholder}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                     disabled={isAddingEmployee}
-                    required
+                    required={field.name !== "esic_number" && field.name !== "pf_number"} // Optional fields
                     autoComplete="off"
                   />
                 )}
@@ -367,16 +388,3 @@ const AddEmployee = ({ isOpen, onClose, onSave, isAddingEmployee, saveToDatabase
 };
 
 export default AddEmployee;
-
-
-
-
-
-
-
-
-
-
-
-
-

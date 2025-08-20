@@ -206,6 +206,7 @@ exports.fetchDesignations = async (req, res) => {
   }
 };
 
+
 exports.fetchEmployees = async (req, res) => {
   try {
     const query = `
@@ -225,6 +226,8 @@ exports.fetchEmployees = async (req, res) => {
         em.company_email,
         em.current_address,
         em.permanent_address,
+        em.esic_number,
+        em.pf_number,
         em.created_at
       FROM employee_master em
       LEFT JOIN emp_gender eg ON em.gender_id = eg.id
@@ -251,6 +254,7 @@ exports.fetchEmployees = async (req, res) => {
     });
   }
 };
+
 
 exports.assignInchargeToSite = async (req, res) => {
   try {
@@ -328,10 +332,11 @@ exports.addEmployee = async (req, res) => {
     const {
       emp_id, full_name, gender_id, date_of_birth, date_of_joining, status_id,
       company, dept_id, emp_type_id, designation_id, branch,
-      mobile, company_email, current_address, permanent_address
+      mobile, company_email, current_address, permanent_address,
+      esic_number, pf_number // Added new fields
     } = req.body;
 
-    // Check for missing fields
+    // Check for missing required fields
     if (
       !emp_id || !full_name || !gender_id || !date_of_birth || !date_of_joining ||
       !status_id || !company || !dept_id || !emp_type_id || !designation_id ||
@@ -339,7 +344,7 @@ exports.addEmployee = async (req, res) => {
     ) {
       return res.status(400).json({
         status: 'error',
-        message: 'All fields are required',
+        message: 'All required fields (except ESIC and PF numbers) must be provided',
       });
     }
 
@@ -433,12 +438,14 @@ exports.addEmployee = async (req, res) => {
       `INSERT INTO employee_master (
         emp_id, full_name, gender_id, date_of_birth, date_of_joining, status_id,
         company, dept_id, emp_type_id, designation_id, branch,
-        mobile, company_email, current_address, permanent_address
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        mobile, company_email, current_address, permanent_address,
+        esic_number, pf_number
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         emp_id, full_name, gender_id, date_of_birth, date_of_joining, status_id,
         company, dept_id, emp_type_id, designation_id, branch,
-        mobile, company_email, current_address, permanent_address
+        mobile, company_email, current_address, permanent_address,
+        esic_number || null, pf_number || null // Handle optional fields
       ]
     );
 
@@ -468,57 +475,6 @@ exports.addEmployee = async (req, res) => {
     });
   }
 };
-
-
-// exports.getAssignedIncharges = async (req, res) => {
-//   try {
-//     const [rows] = await db.query(`
-//       SELECT 
-//         sia.id,
-//         sia.pd_id,
-//         COALESCE(pd.project_name, 'Unknown') AS project_name,
-//         sia.site_id,
-//         COALESCE(sd.site_name, 'Unknown') AS site_name,
-//         COALESCE(sd.po_number, 'Unknown') AS po_number,
-//         sia.emp_id,
-//         COALESCE(em.full_name, 'Unknown') AS full_name,
-//         COALESCE(edg.designation, 'Unknown') AS designation,
-//         COALESCE(em.mobile, 'Unknown') AS mobile,
-//         COALESCE(es.status, 'Unknown') AS status,
-//         sia.from_date,
-//         sia.to_date
-//       FROM siteincharge_assign sia
-//       LEFT JOIN project_details pd ON sia.pd_id = pd.pd_id
-//       LEFT JOIN site_details sd ON sia.site_id = sd.site_id
-//       LEFT JOIN employee_master em ON sia.emp_id = em.emp_id
-//       LEFT JOIN emp_designation edg ON em.designation_id = edg.id
-//       LEFT JOIN emp_status es ON em.status_id = es.id
-//       ORDER BY sia.from_date DESC
-//     `);
-
-//     if (!rows || rows.length === 0) {
-//       return res.status(200).json({
-//         status: 'success',
-//         message: 'No assigned incharges found',
-//         data: []
-//       });
-//     }
-
-//     res.status(200).json({
-//       status: 'success',
-//       message: 'Assigned incharges fetched successfully',
-//       data: rows
-//     });
-//   } catch (error) {
-//     console.error('Error fetching assigned incharges:', error.message, error.stack);
-//     res.status(500).json({
-//       status: 'error',
-//       message: 'Failed to fetch assigned incharge details',
-//       error: error.message
-//     });
-//   }
-// };
-
 
 exports.getAssignedIncharges = async (req, res) => {
   try {
@@ -1242,6 +1198,7 @@ exports.fetchMaterialAssignmentsWithDispatch = async (req, res) => {
 };
 
 
+
 exports.fetchMaterialDispatchDetails = async (req, res) => {
   try {
     const { pd_id, site_id } = req.query;
@@ -1252,7 +1209,8 @@ exports.fetchMaterialDispatchDetails = async (req, res) => {
         md.dc_no,
         md.dispatch_date,
         md.order_no,
-        md.vendor_code,
+        c.vendor_code, -- Fetch vendor_code from company table
+        c.gst_number, -- Fetch gst_number from company table
         md.comp_a_qty,
         md.comp_b_qty,
         md.comp_c_qty,
@@ -1306,6 +1264,7 @@ exports.fetchMaterialDispatchDetails = async (req, res) => {
       LEFT JOIN vehicle_master vm ON tm.vehicle_id = vm.id
       LEFT JOIN driver_master dm ON tm.driver_id = dm.id
       LEFT JOIN provider_master pm ON tm.provider_id = pm.id
+      LEFT JOIN company c ON pd.company_id = c.company_id
     `;
     const queryParams = [];
 
@@ -1319,12 +1278,33 @@ exports.fetchMaterialDispatchDetails = async (req, res) => {
       });
     }
 
+    // Fetch order_date from po_reckoner table
+    const [poRows] = await db.query(
+      `
+      SELECT created_at AS order_date
+      FROM po_reckoner
+      WHERE site_id = ?
+      LIMIT 1
+      `,
+      [site_id]
+    );
+
+    const order_date = poRows.length > 0 ? poRows[0].order_date : null;
+
     const [rows] = await db.query(query, queryParams);
+
+    // Add order_date to each row
+    const formattedData = rows.map(row => ({
+      ...row,
+      order_date: order_date ? order_date.toISOString() : 'N/A',
+      vendor_code: row.vendor_code || 'N/A',
+      gst_number: row.gst_number || 'N/A'
+    }));
 
     res.status(200).json({
       status: 'success',
       message: 'Material dispatch details fetched successfully',
-      data: rows,
+      data: formattedData,
     });
   } catch (error) {
     console.error('Fetch dispatch details error:', error);
@@ -1335,7 +1315,9 @@ exports.fetchMaterialDispatchDetails = async (req, res) => {
       sqlMessage: error.sqlMessage || 'No SQL message available',
     });
   }
-};  
+};
+
+
 exports.getTransportTypes = async function(req, res) {
   try {
     const [rows] = await db.query("SELECT id, type FROM transport_type");

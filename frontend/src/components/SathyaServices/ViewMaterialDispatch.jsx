@@ -1,6 +1,7 @@
 // import React, { useState, useEffect } from "react";
 // import axios from "axios";
 // import { Loader2, Package, FileText, X } from "lucide-react";
+// import DispatchReport from "./DispatchReport";
 
 // const ViewMaterialDispatch = () => {
 //   const [projects, setProjects] = useState([]);
@@ -15,16 +16,17 @@
 //   });
 //   const [error, setError] = useState(null);
 //   const [commonDispatchDetails, setCommonDispatchDetails] = useState({
-//     dc_no: "",
+//     dc_No: "",
 //     dispatch_date: "",
 //     order_no: "",
 //     vendor_code: "",
 //     destination: "",
 //     travel_expense: "",
-//     vehicle_number: "", // Changed from vehicle_id
-//     driver_name: "", // Changed from driver_id
-//     driver_mobile: "", // Added for driver_mobile
+//     vehicle_number: "",
+//     driver_name: "",
+//     driver_mobile: "",
 //   });
+//   const [showDispatchReport, setShowDispatchReport] = useState(false);
 
 //   // Fetch projects
 //   const fetchProjects = async () => {
@@ -117,6 +119,7 @@
 //       driver_mobile: "",
 //     });
 //     setError(null);
+//     setShowDispatchReport(false);
 //     if (pd_id) {
 //       await fetchSites(pd_id);
 //     }
@@ -138,6 +141,21 @@
 //       driver_mobile: "",
 //     });
 //     setError(null);
+//     setShowDispatchReport(false);
+//   };
+
+//   // Toggle Dispatch Report visibility
+//   const handleViewDC = () => {
+//     setShowDispatchReport(true);
+//   };
+
+//   // Helper function to format component ratios
+//   const formatComponentRatios = (comp_ratio_a, comp_ratio_b, comp_ratio_c) => {
+//     const ratios = [comp_ratio_a, comp_ratio_b];
+//     if (comp_ratio_c !== null) {
+//       ratios.push(comp_ratio_c);
+//     }
+//     return ` (${ratios.join(':')})`;
 //   };
 
 //   useEffect(() => {
@@ -205,6 +223,18 @@
 //             )}
 //           </div>
 //         </div>
+
+//         {/* View DC Button */}
+//         {dispatchedMaterials.length > 0 && (
+//           <div className="mb-6 text-right">
+//             <button
+//               onClick={handleViewDC}
+//               className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all duration-200"
+//             >
+//               View DC
+//             </button>
+//           </div>
+//         )}
 
 //         {/* Common Dispatch Details */}
 //         {dispatchedMaterials.length > 0 && (
@@ -323,7 +353,7 @@
 //                         </td>
 //                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
 //                           <p className="font-medium">
-//                             {dispatch.item_name || "N/A"}
+//                             {dispatch.item_name || "N/A"}{formatComponentRatios(dispatch.comp_ratio_a, dispatch.comp_ratio_b, dispatch.comp_ratio_c)}
 //                           </p>
 //                         </td>
 //                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
@@ -388,9 +418,9 @@
 //                       <span className="text-sm font-medium text-gray-900">#{index + 1}</span>
 //                     </div>
 //                     <div>
-//                       <p className="text-sm font-medium text-gray-700">Material Name</p>
+//                       <p className="text-sm font-medium text-gray-700 Ascending: true">Material Name</p>
 //                       <p className="text-sm text-gray-600">
-//                         {dispatch.item_name || "N/A"}
+//                         {dispatch.item_name || "N/A"}{formatComponentRatios(dispatch.comp_ratio_a, dispatch.comp_ratio_b, dispatch.comp_ratio_c)}
 //                       </p>
 //                     </div>
 //                     <div>
@@ -443,6 +473,14 @@
 //                 </div>
 //               ))}
 //             </div>
+
+//             {/* Dispatch Report */}
+//             {showDispatchReport && (
+//               <DispatchReport
+//                 commonDispatchDetails={commonDispatchDetails}
+//                 dispatchedMaterials={dispatchedMaterials}
+//               />
+//             )}
 //           </>
 //         )}
 //       </div>
@@ -451,18 +489,6 @@
 // };
 
 // export default ViewMaterialDispatch;
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -504,10 +530,12 @@ const ViewMaterialDispatch = () => {
   });
   const [error, setError] = useState(null);
   const [commonDispatchDetails, setCommonDispatchDetails] = useState({
-    dc_No: "",
+    dc_no: "",
     dispatch_date: "",
     order_no: "",
     vendor_code: "",
+    gst_number: "", // Added gst_number
+    order_date: "", // Added order_date
     destination: "",
     travel_expense: "",
     vehicle_number: "",
@@ -567,6 +595,10 @@ const ViewMaterialDispatch = () => {
             : "N/A",
           order_no: firstMaterial.order_no || "N/A",
           vendor_code: firstMaterial.vendor_code || "N/A",
+          gst_number: firstMaterial.gst_number || "N/A", // Added gst_number
+          order_date: firstMaterial.order_date
+            ? new Date(firstMaterial.order_date).toLocaleDateString("en-US", { dateStyle: "medium" })
+            : "N/A", // Added order_date
           destination: firstMaterial.transport_details?.destination || "N/A",
           travel_expense: firstMaterial.transport_details?.travel_expense
             ? firstMaterial.transport_details.travel_expense.toLocaleString()
@@ -600,6 +632,8 @@ const ViewMaterialDispatch = () => {
       dispatch_date: "",
       order_no: "",
       vendor_code: "",
+      gst_number: "", // Added gst_number
+      order_date: "", // Added order_date
       destination: "",
       travel_expense: "",
       vehicle_number: "",
@@ -622,6 +656,8 @@ const ViewMaterialDispatch = () => {
       dispatch_date: "",
       order_no: "",
       vendor_code: "",
+      gst_number: "", // Added gst_number
+      order_date: "", // Added order_date
       destination: "",
       travel_expense: "",
       vehicle_number: "",
@@ -635,6 +671,15 @@ const ViewMaterialDispatch = () => {
   // Toggle Dispatch Report visibility
   const handleViewDC = () => {
     setShowDispatchReport(true);
+  };
+
+  // Helper function to format component ratios
+  const formatComponentRatios = (comp_ratio_a, comp_ratio_b, comp_ratio_c) => {
+    const ratios = [comp_ratio_a, comp_ratio_b];
+    if (comp_ratio_c !== null) {
+      ratios.push(comp_ratio_c);
+    }
+    return ` (${ratios.join(':')})`;
   };
 
   useEffect(() => {
@@ -733,8 +778,14 @@ const ViewMaterialDispatch = () => {
                 <p className="text-sm text-gray-900">{commonDispatchDetails.order_no}</p>
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-600">Vendor Code</p>
-                <p className="text-sm text-gray-900">{commonDispatchDetails.vendor_code}</p>
+                <p className="text-xs font-medium text-gray-600">Vendor Code / GSTIN</p>
+                <p className="text-sm text-gray-900">
+                  {commonDispatchDetails.vendor_code} {commonDispatchDetails.gst_number !== "N/A" ? `/ ${commonDispatchDetails.gst_number}` : ""}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-gray-600">Order Date</p>
+                <p className="text-sm text-gray-900">{commonDispatchDetails.order_date}</p>
               </div>
               <div>
                 <p className="text-xs font-medium text-gray-600">Destination</p>
@@ -832,7 +883,7 @@ const ViewMaterialDispatch = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                           <p className="font-medium">
-                            {dispatch.item_name || "N/A"}
+                            {dispatch.item_name || "N/A"}{formatComponentRatios(dispatch.comp_ratio_a, dispatch.comp_ratio_b, dispatch.comp_ratio_c)}
                           </p>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
@@ -897,9 +948,9 @@ const ViewMaterialDispatch = () => {
                       <span className="text-sm font-medium text-gray-900">#{index + 1}</span>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-700 Ascending: true">Material Name</p>
+                      <p className="text-sm font-medium text-gray-700">Material Name</p>
                       <p className="text-sm text-gray-600">
-                        {dispatch.item_name || "N/A"}
+                        {dispatch.item_name || "N/A"}{formatComponentRatios(dispatch.comp_ratio_a, dispatch.comp_ratio_b, dispatch.comp_ratio_c)}
                       </p>
                     </div>
                     <div>
