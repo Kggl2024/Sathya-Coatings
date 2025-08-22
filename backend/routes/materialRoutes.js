@@ -39,4 +39,6 @@
     router.get("/vehicles", materialController.getVehicles);
     router.get("/drivers", materialController.getDrivers);
 
+    router.get("/check-desc-assigned", materialController.checkDescAssigned);
+
     module.exports = router;

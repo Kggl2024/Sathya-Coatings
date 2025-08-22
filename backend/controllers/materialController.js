@@ -958,6 +958,39 @@ exports.assignMaterial = async (req, res) => {
 };
 
 
+exports.checkDescAssigned = async (req, res) => {
+  try {
+    const { site_id, desc_id } = req.query;
+
+    if (!site_id || !desc_id) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'site_id and desc_id are required',
+      });
+    }
+
+    const [rows] = await db.query(
+      'SELECT COUNT(*) as count FROM material_assign WHERE site_id = ? AND desc_id = ?',
+      [site_id, desc_id]
+    );
+
+    const isAssigned = rows[0].count > 0;
+
+    res.status(200).json({
+      status: 'success',
+      message: isAssigned ? 'Description is assigned' : 'Description is not assigned',
+      data: { isAssigned },
+    });
+  } catch (error) {
+    console.error('Error checking description assignment:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to check description assignment',
+      error: error.message,
+    });
+  }
+};
+
 
 exports.fetchWorkDescriptions = async (req, res) => {
   try {
