@@ -19,6 +19,7 @@ const ExpenseEntry = () => {
     petty_cash_id: null,
     project_name: "",
     site_name: "",
+    desc_name: "",
     assign_date: "",
     expense_category_id: "",
     expense_detail_id: "",
@@ -225,6 +226,7 @@ const ExpenseEntry = () => {
       petty_cash_id: record.id,
       project_name: record.project_name,
       site_name: record.site_name,
+      desc_name: record.desc_name,
       assign_date: formatDisplayDate(record.assign_date),
       expense_category_id: "",
       expense_detail_id: "",
@@ -307,6 +309,7 @@ const ExpenseEntry = () => {
         petty_cash_id: null,
         project_name: "",
         site_name: "",
+        desc_name: "",
         assign_date: "",
         expense_category_id: "",
         expense_detail_id: "",
@@ -339,6 +342,7 @@ const ExpenseEntry = () => {
       petty_cash_id: null,
       project_name: "",
       site_name: "",
+      desc_name: "",
       assign_date: "",
       expense_category_id: "",
       expense_detail_id: "",
@@ -484,7 +488,7 @@ const ExpenseEntry = () => {
                         <div className="flex justify-between items-start">
                           <div>
                             <p className="text-sm font-medium text-gray-800">
-                              Date: {record.assign_date}
+                              Date: {record.assign_date} <span className="text-gray-600">({record.desc_name || "N/A"})</span>
                             </p>
                             <p className="text-xs text-gray-600">
                               Received: ₹{calculateReceivedAmount(record).toFixed(2)}
@@ -568,6 +572,7 @@ const ExpenseEntry = () => {
                   <thead className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white sticky top-0 z-10">
                     <tr className="border-b border-gray-200">
                       <th className="px-4 py-3 text-left text-xs font-semibold tracking-wider">Date</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold tracking-wider">Work Description</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold tracking-wider">Receivable(₹)</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold tracking-wider">Payable(₹)</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold tracking-wider">Remaining (₹)</th>
@@ -591,6 +596,9 @@ const ExpenseEntry = () => {
                           >
                             <td className="px-4 py-3 text-xs text-gray-700 break-words border-r border-gray-200">
                               {record.assign_date}
+                            </td>
+                            <td className="px-4 py-3 text-xs text-gray-700 break-words border-r border-gray-200">
+                              {record.desc_name || "N/A"}
                             </td>
                             <td className="px-4 py-3 text-xs text-gray-700 break-words border-r border-gray-200">
                               ₹{calculateReceivedAmount(record).toFixed(2)}
@@ -652,6 +660,12 @@ const ExpenseEntry = () => {
                                 rowSpan={recordExpenses.length}
                               >
                                 {record.assign_date}
+                              </td>
+                              <td 
+                                className="px-4 py-3 text-xs text-gray-700 break-words border-r border-gray-200 align-top"
+                                rowSpan={recordExpenses.length}
+                              >
+                                {record.desc_name || "N/A"}
                               </td>
                               <td 
                                 className="px-4 py-3 text-xs text-gray-700 break-words border-r border-gray-200 align-top"
@@ -787,7 +801,9 @@ const ExpenseEntry = () => {
                   </div>
                   <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
                     <p className="text-xs font-medium text-gray-500 mb-1">Date</p>
-                    <p className="text-sm font-medium text-gray-800">{expenseForm.assign_date}</p>
+                    <p className="text-sm font-medium text-gray-800">
+                      {expenseForm.assign_date} <span className="text-gray-600">({expenseForm.desc_name || "N/A"})</span>
+                    </p>
                   </div>
                 </div>
 

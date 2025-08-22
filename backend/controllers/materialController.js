@@ -1060,7 +1060,6 @@ exports.fetchWorkDescriptions = async (req, res) => {
 
 
 
-
 exports.addMaterialDispatch = async (req, res) => {
   const connection = await db.getConnection();
   try {
@@ -1145,9 +1144,20 @@ exports.addMaterialDispatch = async (req, res) => {
       // Insert dispatch assignments
       dispatchInsertedIds = [];
       for (const { material_assign_id, dc_no, dispatch_date, order_no, vendor_code, comp_a_qty, comp_b_qty, comp_c_qty, comp_a_remarks, comp_b_remarks, comp_c_remarks } of assignments) {
+        // Fetch desc_id from material_assign
+        const [maRow] = await connection.query('SELECT desc_id FROM material_assign WHERE id = ?', [material_assign_id]);
+        if (maRow.length === 0) {
+          await connection.rollback();
+          return res.status(400).json({
+            status: 'error',
+            message: `Invalid material_assign_id: ${material_assign_id} does not exist`
+          });
+        }
+        const desc_id = maRow[0].desc_id;
+
         const [result] = await connection.query(
-          'INSERT INTO material_dispatch (material_assign_id, dc_no, dispatch_date, order_no, vendor_code, comp_a_qty, comp_b_qty, comp_c_qty, comp_a_remarks, comp_b_remarks, comp_c_remarks, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
-          [material_assign_id, dc_no, dispatch_date, order_no, vendor_code, comp_a_qty, comp_b_qty, comp_c_qty, comp_a_remarks, comp_b_remarks, comp_c_remarks]
+          'INSERT INTO material_dispatch (material_assign_id, desc_id, dc_no, dispatch_date, order_no, vendor_code, comp_a_qty, comp_b_qty, comp_c_qty, comp_a_remarks, comp_b_remarks, comp_c_remarks, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
+          [material_assign_id, desc_id, dc_no, dispatch_date, order_no, vendor_code, comp_a_qty, comp_b_qty, comp_c_qty, comp_a_remarks, comp_b_remarks, comp_c_remarks]
         );
         dispatchInsertedIds.push({ material_assign_id, dispatch_id: result.insertId });
       }
@@ -1310,7 +1320,6 @@ exports.addMaterialDispatch = async (req, res) => {
 
 
 
-
 exports.fetchMaterialAssignmentsWithDispatch = async (req, res) => {
   try {
     const { pd_id, site_id } = req.query;
@@ -1322,6 +1331,8 @@ exports.fetchMaterialAssignmentsWithDispatch = async (req, res) => {
         ma.comp_ratio_a,
         ma.comp_ratio_b,
         ma.comp_ratio_c,
+        ma.desc_id,
+        wd.desc_name,
         pd.project_name,
         sd.site_name,
         sd.po_number,
@@ -1336,6 +1347,7 @@ exports.fetchMaterialAssignmentsWithDispatch = async (req, res) => {
       LEFT JOIN site_details sd ON ma.site_id = sd.site_id
       LEFT JOIN material_master mm ON ma.item_id = mm.item_id
       LEFT JOIN uom_master um ON ma.uom_id = um.uom_id
+      LEFT JOIN work_descriptions wd ON ma.desc_id = wd.desc_id
       LEFT JOIN material_dispatch md ON ma.id = md.material_assign_id
       WHERE md.material_assign_id IS NULL
     `;

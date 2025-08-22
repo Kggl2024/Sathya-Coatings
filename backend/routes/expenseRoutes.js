@@ -10,5 +10,6 @@ router.get("/categories", expenseController.getExpenseCategories);
 router.post("/fetch-details", expenseController.fetchExpenseDetails);
 router.post("/fetch-expenses-by-petty-cash", expenseController.fetchExpensesByPettyCash);
 router.put("/update-petty-cash/:id", expenseController.updatePettyCash);
+router.get("/work-descriptions/:site_id", expenseController.fetchWorkDescriptionsBySite);
 
 module.exports = router;

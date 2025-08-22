@@ -491,12 +491,6 @@
 
 
 
-
-
-
-
-
-
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
@@ -510,18 +504,7 @@ const AssignMaterial = () => {
   const [workDescriptions, setWorkDescriptions] = useState([]);
   const [selectedProject, setSelectedProject] = useState("");
   const [selectedSite, setSelectedSite] = useState("");
-  const [rows, setRows] = useState([
-    {
-      desc_id: "",
-      item_id: "",
-      uom_id: "",
-      quantity: "",
-      comp_ratio_a: "",
-      comp_ratio_b: "",
-      comp_ratio_c: "",
-    },
-  ]);
-  const [selectedDescIds, setSelectedDescIds] = useState(new Set());
+  const [materialAssignments, setMaterialAssignments] = useState({});
   const [loading, setLoading] = useState({
     projects: false,
     sites: false,
@@ -594,11 +577,28 @@ const AssignMaterial = () => {
     try {
       setLoading((prev) => ({ ...prev, workDescriptions: true }));
       const response = await axios.get(`http://localhost:5000/material/work-descriptions?site_id=${site_id}`);
-      setWorkDescriptions(response.data.data || []);
+      const descriptions = response.data.data || [];
+      setWorkDescriptions(descriptions);
+      // Initialize material assignments for each work description
+      const initialAssignments = descriptions.reduce((acc, desc) => {
+        acc[desc.desc_id] = [
+          {
+            item_id: "",
+            uom_id: "",
+            quantity: "",
+            comp_ratio_a: "",
+            comp_ratio_b: "",
+            comp_ratio_c: "",
+          },
+        ];
+        return acc;
+      }, {});
+      setMaterialAssignments(initialAssignments);
     } catch (error) {
       console.error("Error fetching work descriptions:", error);
       setError("Failed to load work descriptions. Please try again.");
       setWorkDescriptions([]);
+      setMaterialAssignments({});
     } finally {
       setLoading((prev) => ({ ...prev, workDescriptions: false }));
     }
@@ -610,17 +610,12 @@ const AssignMaterial = () => {
     fetchUoms();
   }, []);
 
-  useEffect(() => {
-    const newSelectedDescIds = new Set(rows.map(row => row.desc_id).filter(id => id));
-    setSelectedDescIds(newSelectedDescIds);
-  }, [rows]);
-
   // Handle project selection
   const handleProjectChange = async (e) => {
     const pd_id = e.target.value;
     setSelectedProject(pd_id);
     setSelectedSite("");
-    setRows([{ desc_id: "", item_id: "", uom_id: "", quantity: "", comp_ratio_a: "", comp_ratio_b: "", comp_ratio_c: "" }]);
+    setMaterialAssignments({});
     setWorkDescriptions([]);
     setError(null);
     if (pd_id) {
@@ -634,7 +629,7 @@ const AssignMaterial = () => {
   const handleSiteChange = async (e) => {
     const site_id = e.target.value;
     setSelectedSite(site_id);
-    setRows([{ desc_id: "", item_id: "", uom_id: "", quantity: "", comp_ratio_a: "", comp_ratio_b: "", comp_ratio_c: "" }]);
+    setMaterialAssignments({});
     setError(null);
     if (site_id) {
       await fetchWorkDescriptions(site_id);
@@ -643,40 +638,50 @@ const AssignMaterial = () => {
     }
   };
 
-  // Handle input changes for table rows
-  const handleInputChange = (index, e) => {
+  // Handle material input changes
+  const handleMaterialChange = (desc_id, matIndex, e) => {
     const { name, value } = e.target;
-    const updatedRows = [...rows];
-    updatedRows[index] = { ...updatedRows[index], [name]: value };
-    setRows(updatedRows);
+    setMaterialAssignments((prev) => ({
+      ...prev,
+      [desc_id]: prev[desc_id].map((mat, i) =>
+        i === matIndex ? { ...mat, [name]: value } : mat
+      ),
+    }));
     setError(null);
   };
 
-  // Add new row
-  const handleAddRow = () => {
-    setRows([
-      ...rows,
-      {
-        desc_id: "",
-        item_id: "",
-        uom_id: "",
-        quantity: "",
-        comp_ratio_a: "",
-        comp_ratio_b: "",
-        comp_ratio_c: "",
-      },
-    ]);
+  // Add new material to a work description
+  const handleAddMaterial = (desc_id) => {
+    setMaterialAssignments((prev) => ({
+      ...prev,
+      [desc_id]: [
+        ...prev[desc_id],
+        {
+          item_id: "",
+          uom_id: "",
+          quantity: "",
+          comp_ratio_a: "",
+          comp_ratio_b: "",
+          comp_ratio_c: "",
+        },
+      ],
+    }));
     setError(null);
   };
 
-  // Remove row
-  const handleRemoveRow = (index) => {
-    if (rows.length <= 1) {
-      setError("At least one material assignment is required.");
-      return;
-    }
-    setRows(rows.filter((_, i) => i !== index));
-    setError(null);
+  // Remove material from a work description
+  const handleRemoveMaterial = (desc_id, matIndex) => {
+    setMaterialAssignments((prev) => {
+      const materials = prev[desc_id];
+      if (materials.length <= 1) {
+        setError(`At least one material assignment is required for ${workDescriptions.find((desc) => desc.desc_id === desc_id)?.desc_name || "work description"}.`);
+        return prev;
+      }
+      return {
+        ...prev,
+        [desc_id]: materials.filter((_, i) => i !== matIndex),
+      };
+    });
   };
 
   // Submit assignments
@@ -696,18 +701,25 @@ const AssignMaterial = () => {
       }
 
       const validationErrors = [];
-      const usedDescIds = new Set();
-      rows.forEach((row, index) => {
-        if (!row.desc_id) validationErrors.push(`Row ${index + 1}: Work Description is required`);
-        else if (usedDescIds.has(row.desc_id)) validationErrors.push(`Row ${index + 1}: Work Description must be unique`);
-        else usedDescIds.add(row.desc_id);
-        if (!row.item_id) validationErrors.push(`Row ${index + 1}: Material is required`);
-        if (!row.uom_id) validationErrors.push(`Row ${index + 1}: Unit of Measure is required`);
-        if (!row.quantity) {
-          validationErrors.push(`Row ${index + 1}: Quantity is required`);
-        } else if (isNaN(row.quantity) || row.quantity <= 0) {
-          validationErrors.push(`Row ${index + 1}: Quantity must be a positive number`);
-        }
+      const usedMaterials = new Set();
+      Object.entries(materialAssignments).forEach(([desc_id, materials]) => {
+        const descName = workDescriptions.find((desc) => desc.desc_id === desc_id)?.desc_name || `Work Description ${desc_id}`;
+        materials.forEach((row, index) => {
+          const materialKey = `${desc_id}-${row.item_id}`;
+          if (!row.item_id) {
+            validationErrors.push(`${descName}, Row ${index + 1}: Material is required`);
+          } else if (usedMaterials.has(materialKey)) {
+            validationErrors.push(`${descName}, Row ${index + 1}: Material must be unique within this work description`);
+          } else {
+            usedMaterials.add(materialKey);
+          }
+          if (!row.uom_id) validationErrors.push(`${descName}, Row ${index + 1}: Unit of Measure is required`);
+          if (!row.quantity) {
+            validationErrors.push(`${descName}, Row ${index + 1}: Quantity is required`);
+          } else if (isNaN(row.quantity) || row.quantity <= 0) {
+            validationErrors.push(`${descName}, Row ${index + 1}: Quantity must be a positive number`);
+          }
+        });
       });
 
       if (validationErrors.length > 0) {
@@ -715,17 +727,24 @@ const AssignMaterial = () => {
         return;
       }
 
-      const payload = rows.map((row) => ({
-        pd_id: selectedProject,
-        site_id: selectedSite,
-        item_id: row.item_id,
-        uom_id: parseInt(row.uom_id),
-        quantity: parseInt(row.quantity),
-        desc_id: row.desc_id,
-        comp_ratio_a: row.comp_ratio_a ? parseInt(row.comp_ratio_a) : null,
-        comp_ratio_b: row.comp_ratio_b ? parseInt(row.comp_ratio_b) : null,
-        comp_ratio_c: row.comp_ratio_c ? parseInt(row.comp_ratio_c) : null,
-      }));
+      const payload = Object.entries(materialAssignments).flatMap(([desc_id, materials]) =>
+        materials.map((row) => ({
+          pd_id: selectedProject,
+          site_id: selectedSite,
+          item_id: row.item_id,
+          uom_id: parseInt(row.uom_id),
+          quantity: parseInt(row.quantity),
+          desc_id: desc_id,
+          comp_ratio_a: row.comp_ratio_a ? parseInt(row.comp_ratio_a) : null,
+          comp_ratio_b: row.comp_ratio_b ? parseInt(row.comp_ratio_b) : null,
+          comp_ratio_c: row.comp_ratio_c ? parseInt(row.comp_ratio_c) : null,
+        }))
+      );
+
+      if (payload.length === 0) {
+        setError("Please add at least one material assignment.");
+        return;
+      }
 
       await axios.post("http://localhost:5000/material/assign-material", payload);
 
@@ -740,7 +759,21 @@ const AssignMaterial = () => {
         iconColor: "#10b981",
       });
 
-      setRows([{ desc_id: "", item_id: "", uom_id: "", quantity: "", comp_ratio_a: "", comp_ratio_b: "", comp_ratio_c: "" }]);
+      setMaterialAssignments(
+        workDescriptions.reduce((acc, desc) => {
+          acc[desc.desc_id] = [
+            {
+              item_id: "",
+              uom_id: "",
+              quantity: "",
+              comp_ratio_a: "",
+              comp_ratio_b: "",
+              comp_ratio_c: "",
+            },
+          ];
+          return acc;
+        }, {})
+      );
       setSelectedProject("");
       setSelectedSite("");
       setSites([]);
@@ -805,7 +838,7 @@ const AssignMaterial = () => {
                   </select>
                 </div>
               </div>
-              
+
               <div className="space-y-1">
                 <label className="block text-sm font-medium text-gray-700">Select Site</label>
                 <div className="relative">
@@ -830,198 +863,201 @@ const AssignMaterial = () => {
               </div>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      #
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Work Description
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Material
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Unit of Measure
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Quantity
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Comp Ratio A
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Comp Ratio B
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Comp Ratio C
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Action
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {rows.map((row, index) => {
-                    const availableForThisRow = workDescriptions.filter(
-                      desc => !selectedDescIds.has(desc.desc_id) || desc.desc_id === row.desc_id
-                    );
-                    return (
-                      <tr
-                        key={`row-${index}`}
-                        className="hover:bg-blue-50 transition-colors duration-150"
+            <div className="px-6 py-4">
+              {workDescriptions.length === 0 && isFormEnabled ? (
+                <div className="text-center py-8 text-gray-600">
+                  No work descriptions available for this site.
+                </div>
+              ) : (
+                workDescriptions.map((desc, index) => (
+                  <details
+                    key={desc.desc_id}
+                    open={index === 0} // Open the first accordion by default
+                    className="mb-6 border border-gray-200 rounded-lg overflow-hidden"
+                  >
+                    <summary className="px-4 py-3 bg-gray-50 text-sm font-medium text-gray-700 cursor-pointer flex justify-between items-center">
+                      <span>{desc.desc_name}</span>
+                    </summary>
+                    <div className="p-4">
+                      <div className="overflow-x-auto mb-4">
+                        <table className="min-w-full divide-y divide-gray-200">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                #
+                              </th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Material
+                              </th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Unit of Measure
+                              </th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Quantity
+                              </th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Comp Ratio A
+                              </th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Comp Ratio B
+                              </th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Comp Ratio C
+                              </th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Action
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-gray-200">
+                            {materialAssignments[desc.desc_id]?.map((mat, matIndex) => (
+                              <tr
+                                key={matIndex}
+                                className="hover:bg-blue-50 transition-colors duration-150"
+                              >
+                                <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                                  {matIndex + 1}
+                                </td>
+                                <td className="px-4 py-3 whitespace-nowrap">
+                                  <select
+                                    name="item_id"
+                                    value={mat.item_id}
+                                    onChange={(e) => handleMaterialChange(desc.desc_id, matIndex, e)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-50"
+                                    required
+                                    disabled={!isFormEnabled}
+                                  >
+                                    <option value="">Select Material</option>
+                                    {materials.map((material) => (
+                                      <option key={material.item_id} value={material.item_id}>
+                                        {material.item_name}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </td>
+                                <td className="px-4 py-3 whitespace-nowrap">
+                                  <select
+                                    name="uom_id"
+                                    value={mat.uom_id}
+                                    onChange={(e) => handleMaterialChange(desc.desc_id, matIndex, e)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-50"
+                                    required
+                                    disabled={!isFormEnabled}
+                                  >
+                                    <option value="">Select UOM</option>
+                                    {uoms.map((uom) => (
+                                      <option key={uom.uom_id} value={uom.uom_id}>
+                                        {uom.uom_name}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </td>
+                                <td className="px-4 py-3 whitespace-nowrap">
+                                  <input
+                                    type="number"
+                                    name="quantity"
+                                    value={mat.quantity}
+                                    onChange={(e) => handleMaterialChange(desc.desc_id, matIndex, e)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-50"
+                                    required
+                                    disabled={!isFormEnabled}
+                                    min="1"
+                                  />
+                                </td>
+                                <td className="px-4 py-3 whitespace-nowrap">
+                                  <input
+                                    type="number"
+                                    name="comp_ratio_a"
+                                    value={mat.comp_ratio_a}
+                                    onChange={(e) => handleMaterialChange(desc.desc_id, matIndex, e)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-50"
+                                    disabled={!isFormEnabled}
+                                    min="0"
+                                  />
+                                </td>
+                                <td className="px-4 py-3 whitespace-nowrap">
+                                  <input
+                                    type="number"
+                                    name="comp_ratio_b"
+                                    value={mat.comp_ratio_b}
+                                    onChange={(e) => handleMaterialChange(desc.desc_id, matIndex, e)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-50"
+                                    disabled={!isFormEnabled}
+                                    min="0"
+                                  />
+                                </td>
+                                <td className="px-4 py-3 whitespace-nowrap">
+                                  <input
+                                    type="number"
+                                    name="comp_ratio_c"
+                                    value={mat.comp_ratio_c}
+                                    onChange={(e) => handleMaterialChange(desc.desc_id, matIndex, e)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-50"
+                                    disabled={!isFormEnabled}
+                                    min="0"
+                                  />
+                                </td>
+                                <td className="px-4 py-3 whitespace-nowrap">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveMaterial(desc.desc_id, matIndex)}
+                                    disabled={materialAssignments[desc.desc_id]?.length <= 1 || !isFormEnabled}
+                                    className={`p-1.5 rounded-md transition ${
+                                      materialAssignments[desc.desc_id]?.length <= 1 || !isFormEnabled
+                                        ? "text-gray-400 cursor-not-allowed"
+                                        : "text-red-600 hover:bg-red-50"
+                                    }`}
+                                    title={
+                                      materialAssignments[desc.desc_id]?.length <= 1
+                                        ? "At least one material is required"
+                                        : "Remove this entry"
+                                    }
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleAddMaterial(desc.desc_id)}
+                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-400 transition-colors"
+                        disabled={!isFormEnabled}
                       >
-                        <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {index + 1}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <select
-                            name="desc_id"
-                            value={row.desc_id}
-                            onChange={(e) => handleInputChange(index, e)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-50"
-                            required
-                            disabled={!isFormEnabled || loading.workDescriptions}
-                          >
-                            <option value="">Select Work Description</option>
-                            {availableForThisRow.map((desc) => (
-                              <option key={desc.desc_id} value={desc.desc_id}>
-                                {desc.desc_name}
-                              </option>
-                            ))}
-                          </select>
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <select
-                            name="item_id"
-                            value={row.item_id}
-                            onChange={(e) => handleInputChange(index, e)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-50"
-                            required
-                            disabled={!isFormEnabled}
-                          >
-                            <option value="">Select Material</option>
-                            {materials.map((material) => (
-                              <option key={material.item_id} value={material.item_id}>
-                                {material.item_name}
-                              </option>
-                            ))}
-                          </select>
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <select
-                            name="uom_id"
-                            value={row.uom_id}
-                            onChange={(e) => handleInputChange(index, e)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-50"
-                            required
-                            disabled={!isFormEnabled}
-                          >
-                            <option value="">Select UOM</option>
-                            {uoms.map((uom) => (
-                              <option key={uom.uom_id} value={uom.uom_id}>
-                                {uom.uom_name}
-                              </option>
-                            ))}
-                          </select>
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <input
-                            type="number"
-                            name="quantity"
-                            value={row.quantity}
-                            onChange={(e) => handleInputChange(index, e)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-50"
-                            required
-                            disabled={!isFormEnabled}
-                            min="1"
-                          />
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <input
-                            type="number"
-                            name="comp_ratio_a"
-                            value={row.comp_ratio_a}
-                            onChange={(e) => handleInputChange(index, e)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-50"
-                            disabled={!isFormEnabled}
-                            min="0"
-                          />
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <input
-                            type="number"
-                            name="comp_ratio_b"
-                            value={row.comp_ratio_b}
-                            onChange={(e) => handleInputChange(index, e)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-50"
-                            disabled={!isFormEnabled}
-                            min="0"
-                          />
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <input
-                            type="number"
-                            name="comp_ratio_c"
-                            value={row.comp_ratio_c}
-                            onChange={(e) => handleInputChange(index, e)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-50"
-                            disabled={!isFormEnabled}
-                            min="0"
-                          />
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveRow(index)}
-                            disabled={rows.length <= 1 || !isFormEnabled}
-                            className={`p-1.5 rounded-md transition ${
-                              rows.length <= 1 || !isFormEnabled
-                                ? "text-gray-400 cursor-not-allowed"
-                                : "text-red-600 hover:bg-red-50"
-                            }`}
-                            title={rows.length <= 1 ? "At least one row is required" : "Remove this entry"}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                        <PlusCircle className="h-4 w-4 mr-2" />
+                        Add Material
+                      </button>
+                    </div>
+                  </details>
+                ))
+              )}
             </div>
 
-            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex flex-col sm:flex-row justify-between items-center space-y-3 sm:space-y-0 sm:space-x-4">
-              <button
-                type="button"
-                onClick={handleAddRow}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-400 transition-colors"
-                disabled={!isFormEnabled}
-              >
-                <PlusCircle className="h-4 w-4 mr-2" />
-                Add Entry
-              </button>
-              <button
-                type="submit"
-                disabled={loading.submitting || !isFormEnabled}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-400 transition-colors"
-              >
-                {loading.submitting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Assign Materials
-                  </>
-                )}
-              </button>
-            </div>
+            {workDescriptions.length > 0 && (
+              <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end">
+                <button
+                  type="submit"
+                  disabled={loading.submitting || !isFormEnabled}
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-400 transition-colors"
+                >
+                  {loading.submitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Assign Materials
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
           </form>
         )}
       </div>

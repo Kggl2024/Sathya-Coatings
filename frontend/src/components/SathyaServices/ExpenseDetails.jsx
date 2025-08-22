@@ -7,14 +7,22 @@ import { parseISO, format } from "date-fns";
 const ExpenseDetails = () => {
   const [projects, setProjects] = useState([]);
   const [sites, setSites] = useState([]);
+  const [workDescriptions, setWorkDescriptions] = useState([]);
   const [pettyCashRecords, setPettyCashRecords] = useState([]);
   const [formData, setFormData] = useState({
     pd_id: "",
     site_id: "",
+    desc_id: "",
     assign_date: "",
     amount: "",
   });
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState({
+    projects: false,
+    sites: false,
+    workDescriptions: false,
+    pettyCash: false,
+    submitting: false,
+  });
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -22,14 +30,14 @@ const ExpenseDetails = () => {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        setLoading(true);
+        setLoading((prev) => ({ ...prev, projects: true }));
         const response = await axios.get("http://localhost:5000/material/projects");
         setProjects(Array.isArray(response.data.data) ? response.data.data : []);
       } catch (error) {
         console.error("Error fetching projects:", error);
         setError("Failed to load projects. Please try again.");
       } finally {
-        setLoading(false);
+        setLoading((prev) => ({ ...prev, projects: false }));
       }
     };
     fetchProjects();
@@ -40,7 +48,7 @@ const ExpenseDetails = () => {
     if (formData.pd_id) {
       const fetchSites = async () => {
         try {
-          setLoading(true);
+          setLoading((prev) => ({ ...prev, sites: true }));
           const response = await axios.get(`http://localhost:5000/material/sites/${formData.pd_id}`);
           setSites(Array.isArray(response.data.data) ? response.data.data : []);
         } catch (error) {
@@ -48,20 +56,45 @@ const ExpenseDetails = () => {
           setError("Failed to load sites. Please try again.");
           setSites([]);
         } finally {
-          setLoading(false);
+          setLoading((prev) => ({ ...prev, sites: false }));
         }
       };
       fetchSites();
     } else {
       setSites([]);
+      setWorkDescriptions([]);
+      setFormData((prev) => ({ ...prev, site_id: "", desc_id: "" }));
     }
   }, [formData.pd_id]);
+
+  // Fetch work descriptions when site_id changes
+  useEffect(() => {
+    if (formData.site_id) {
+      const fetchWorkDescriptions = async () => {
+        try {
+          setLoading((prev) => ({ ...prev, workDescriptions: true }));
+          const response = await axios.get(`http://localhost:5000/expense/work-descriptions/${formData.site_id}`);
+          setWorkDescriptions(Array.isArray(response.data.data) ? response.data.data : []);
+        } catch (error) {
+          console.error("Error fetching work descriptions:", error);
+          setError("Failed to load work descriptions. Please try again.");
+          setWorkDescriptions([]);
+        } finally {
+          setLoading((prev) => ({ ...prev, workDescriptions: false }));
+        }
+      };
+      fetchWorkDescriptions();
+    } else {
+      setWorkDescriptions([]);
+      setFormData((prev) => ({ ...prev, desc_id: "" }));
+    }
+  }, [formData.site_id]);
 
   // Fetch petty cash records
   useEffect(() => {
     const fetchPettyCash = async () => {
       try {
-        setLoading(true);
+        setLoading((prev) => ({ ...prev, pettyCash: true }));
         const response = await axios.get("http://localhost:5000/expense/fetch-petty-cash");
         const records = Array.isArray(response.data.data)
           ? response.data.data.map((record) => ({
@@ -75,7 +108,7 @@ const ExpenseDetails = () => {
         console.error("Error fetching petty cash:", error);
         setError("Failed to load petty cash records. Please try again.");
       } finally {
-        setLoading(false);
+        setLoading((prev) => ({ ...prev, pettyCash: false }));
       }
     };
     fetchPettyCash();
@@ -86,16 +119,17 @@ const ExpenseDetails = () => {
     setFormData((prev) => ({
       ...prev,
       [name]: value,
-      ...(name === "pd_id" ? { site_id: "" } : {}),
+      ...(name === "pd_id" ? { site_id: "", desc_id: "" } : name === "site_id" ? { desc_id: "" } : {}),
     }));
+    setError(null);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      setLoading(true);
-      const { pd_id, site_id, assign_date, amount } = formData;
-      if (!pd_id || !site_id || !assign_date || !amount) {
+      setLoading((prev) => ({ ...prev, submitting: true }));
+      const { pd_id, site_id, desc_id, assign_date, amount } = formData;
+      if (!pd_id || !site_id || !desc_id || !assign_date || !amount) {
         throw new Error("All fields are required");
       }
       const parsedAmount = parseFloat(amount);
@@ -109,7 +143,7 @@ const ExpenseDetails = () => {
       const token = localStorage.getItem("token");
       await axios.post(
         "http://localhost:5000/expense/add-petty-cash",
-        [{ pd_id, site_id, assign_date, amount: parsedAmount }],
+        [{ pd_id, site_id, desc_id, assign_date, amount: parsedAmount }],
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -126,15 +160,17 @@ const ExpenseDetails = () => {
       setFormData({
         pd_id: "",
         site_id: "",
+        desc_id: "",
         assign_date: "",
         amount: "",
       });
+      setWorkDescriptions([]);
       setIsModalOpen(false);
       Swal.fire({
-        icon: 'success',
-        title: 'Success!',
-        text: 'Petty cash added successfully!',
-        position: 'top-end',
+        icon: "success",
+        title: "Success!",
+        text: "Petty cash added successfully!",
+        position: "top-end",
         toast: true,
         showConfirmButton: false,
         timer: 3000,
@@ -143,17 +179,17 @@ const ExpenseDetails = () => {
     } catch (error) {
       console.error("Error adding petty cash:", error);
       Swal.fire({
-        icon: 'error',
-        title: 'Error!',
-        text: error.message || 'Failed to add petty cash',
-        position: 'top-end',
+        icon: "error",
+        title: "Error!",
+        text: error.response?.data?.message || error.message || "Failed to add petty cash",
+        position: "top-end",
         toast: true,
         showConfirmButton: false,
         timer: 3000,
         timerProgressBar: true,
       });
     } finally {
-      setLoading(false);
+      setLoading((prev) => ({ ...prev, submitting: false }));
     }
   };
 
@@ -162,9 +198,11 @@ const ExpenseDetails = () => {
     setFormData({
       pd_id: "",
       site_id: "",
+      desc_id: "",
       assign_date: "",
       amount: "",
     });
+    setWorkDescriptions([]);
     setError(null);
   };
 
@@ -187,7 +225,7 @@ const ExpenseDetails = () => {
         </div>
       )}
 
-      {loading && (
+      {(loading.projects || loading.sites || loading.workDescriptions || loading.pettyCash) && (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
         </div>
@@ -210,6 +248,9 @@ const ExpenseDetails = () => {
                     Site
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Work Description
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Amount (₹)
                   </th>
                 </tr>
@@ -228,6 +269,9 @@ const ExpenseDetails = () => {
                       {record.po_number && (
                         <div className="text-xs text-gray-600 font-semibold mt-1">PO: {record.po_number}</div>
                       )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                      {record.desc_name || "N/A"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700">
                       ₹{isNaN(record.amount) ? "0.00" : record.amount.toFixed(2)}
@@ -248,8 +292,8 @@ const ExpenseDetails = () => {
       {isModalOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div 
-              className="fixed inset-0 transition-opacity" 
+            <div
+              className="fixed inset-0 transition-opacity"
               aria-hidden="true"
               onClick={closeModal}
             >
@@ -257,10 +301,12 @@ const ExpenseDetails = () => {
             </div>
 
             <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            
-            <div className={`inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full ${
-              isModalOpen ? 'animate-slide-in' : 'animate-slide-out'
-            }`}>
+
+            <div
+              className={`inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full ${
+                isModalOpen ? "animate-slide-in" : "animate-slide-out"
+              }`}
+            >
               <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                 <div className="flex justify-between items-start">
                   <h3 className="text-lg leading-6 font-medium text-gray-900">Add Petty Cash</h3>
@@ -271,7 +317,7 @@ const ExpenseDetails = () => {
                     <X size={20} />
                   </button>
                 </div>
-                
+
                 <form onSubmit={handleSubmit} className="mt-4 space-y-4">
                   <div>
                     <label htmlFor="pd_id" className="block text-sm font-medium text-gray-700 mb-1">
@@ -283,7 +329,7 @@ const ExpenseDetails = () => {
                       value={formData.pd_id}
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                      disabled={loading}
+                      disabled={loading.submitting || loading.projects}
                       required
                     >
                       <option value="">Select a project</option>
@@ -305,13 +351,35 @@ const ExpenseDetails = () => {
                       value={formData.site_id}
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                      disabled={loading || !formData.pd_id}
+                      disabled={loading.submitting || loading.sites || !formData.pd_id}
                       required
                     >
                       <option value="">Select a site</option>
                       {sites.map((site) => (
                         <option key={site.site_id} value={site.site_id}>
-                          {site.site_name} {site.po_number ? `(PO: ${site.po_number})` : ''}
+                          {site.site_name} {site.po_number ? `(PO: ${site.po_number})` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label htmlFor="desc_id" className="block text-sm font-medium text-gray-700 mb-1">
+                      Work Description
+                    </label>
+                    <select
+                      id="desc_id"
+                      name="desc_id"
+                      value={formData.desc_id}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                      disabled={loading.submitting || loading.workDescriptions || !formData.site_id}
+                      required
+                    >
+                      <option value="">Select a work description</option>
+                      {workDescriptions.map((desc) => (
+                        <option key={desc.desc_id} value={desc.desc_id}>
+                          {desc.desc_name}
                         </option>
                       ))}
                     </select>
@@ -328,7 +396,7 @@ const ExpenseDetails = () => {
                       value={formData.assign_date}
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                      disabled={loading || !formData.pd_id || !formData.site_id}
+                      disabled={loading.submitting || !formData.pd_id || !formData.site_id || !formData.desc_id}
                       required
                     />
                   </div>
@@ -346,7 +414,7 @@ const ExpenseDetails = () => {
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       placeholder="0.00"
-                      disabled={loading || !formData.pd_id || !formData.site_id}
+                      disabled={loading.submitting || !formData.pd_id || !formData.site_id || !formData.desc_id}
                       required
                     />
                   </div>
@@ -362,13 +430,29 @@ const ExpenseDetails = () => {
                     <button
                       type="submit"
                       className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-                      disabled={loading}
+                      disabled={loading.submitting}
                     >
-                      {loading ? (
+                      {loading.submitting ? (
                         <span className="flex items-center justify-center">
-                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          <svg
+                            className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
                           </svg>
                           Processing...
                         </span>
@@ -395,7 +479,7 @@ const ExpenseDetails = () => {
             opacity: 1;
           }
         }
-        
+
         @keyframes slide-out {
           from {
             transform: translateX(0);
@@ -406,11 +490,11 @@ const ExpenseDetails = () => {
             opacity: 0;
           }
         }
-        
+
         .animate-slide-in {
           animation: slide-in 0.3s ease-out forwards;
         }
-        
+
         .animate-slide-out {
           animation: slide-out 0.3s ease-in forwards;
         }
