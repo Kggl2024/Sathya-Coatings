@@ -808,6 +808,79 @@ exports.getAssignedMaterials = async (req, res) => {
 
 
 
+// exports.assignMaterial = async (req, res) => {
+//   try {
+//     const assignments = Array.isArray(req.body) ? req.body : [req.body];
+
+//     // Validate each assignment
+//     const validationErrors = [];
+//     assignments.forEach((assignment, index) => {
+//       const { pd_id, site_id, item_id, uom_id, quantity, comp_ratio_a, comp_ratio_b, comp_ratio_c } = assignment;
+
+//       if (!pd_id || typeof pd_id !== 'string' || pd_id.trim() === '') {
+//         validationErrors.push(`Assignment ${index + 1}: pd_id is required and must be a non-empty string`);
+//       }
+//       if (!site_id || typeof site_id !== 'string' || site_id.trim() === '') {
+//         validationErrors.push(`Assignment ${index + 1}: site_id is required and must be a non-empty string`);
+//       }
+//       if (!item_id || typeof item_id !== 'string' || item_id.trim() === '' || item_id === 'N/A') {
+//         validationErrors.push(`Assignment ${index + 1}: item_id is required and must be a valid material ID (not 'N/A')`);
+//       }
+//       if (!Number.isInteger(uom_id) || uom_id <= 0) {
+//         validationErrors.push(`Assignment ${index + 1}: uom_id is required and must be a positive integer`);
+//       }
+//       if (!Number.isInteger(quantity) || quantity <= 0) {
+//         validationErrors.push(`Assignment ${index + 1}: quantity is required and must be a positive integer`);
+//       }
+//       if (comp_ratio_a !== null && (!Number.isInteger(comp_ratio_a) || comp_ratio_a < 0)) {
+//         validationErrors.push(`Assignment ${index + 1}: comp_ratio_a must be a non-negative integer or null`);
+//       }
+//       if (comp_ratio_b !== null && (!Number.isInteger(comp_ratio_b) || comp_ratio_b < 0)) {
+//         validationErrors.push(`Assignment ${index + 1}: comp_ratio_b must be a non-negative integer or null`);
+//       }
+//       if (comp_ratio_c !== null && (!Number.isInteger(comp_ratio_c) || comp_ratio_c < 0)) {
+//         validationErrors.push(`Assignment ${index + 1}: comp_ratio_c must be a non-negative integer or null`);
+//       }
+//     });
+
+//     if (validationErrors.length > 0) {
+//       return res.status(400).json({
+//         status: 'error',
+//         message: 'Validation errors',
+//         errors: validationErrors,
+//       });
+//     }
+
+//     const insertedIds = [];
+//     for (const { pd_id, site_id, item_id, uom_id, quantity, comp_ratio_a, comp_ratio_b, comp_ratio_c } of assignments) {
+//       const [result] = await db.query(
+//         'INSERT INTO material_assign (pd_id, site_id, item_id, uom_id, quantity, comp_ratio_a, comp_ratio_b, comp_ratio_c, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())',
+//         [pd_id, site_id, item_id, uom_id, quantity, comp_ratio_a, comp_ratio_b, comp_ratio_c]
+//       );
+//       insertedIds.push(result.insertId);
+//     }
+
+//     res.status(201).json({
+//       status: 'success',
+//       message: 'Materials assigned successfully',
+//       data: { insertedIds },
+//     });
+//   } catch (error) {
+//     console.error('Error in assignMaterial:', error);
+//     if (error.code === 'ER_NO_REFERENCED_ROW_2') {
+//       return res.status(400).json({
+//         status: 'error',
+//         message: 'Invalid reference: pd_id, site_id, item_id, or uom_id does not exist in the database',
+//       });
+//     }
+//     res.status(500).json({
+//       status: 'error',
+//       message: 'Internal server error',
+//       error: error.message,
+//     });
+//   }
+// };
+
 exports.assignMaterial = async (req, res) => {
   try {
     const assignments = Array.isArray(req.body) ? req.body : [req.body];
@@ -815,7 +888,7 @@ exports.assignMaterial = async (req, res) => {
     // Validate each assignment
     const validationErrors = [];
     assignments.forEach((assignment, index) => {
-      const { pd_id, site_id, item_id, uom_id, quantity, comp_ratio_a, comp_ratio_b, comp_ratio_c } = assignment;
+      const { pd_id, site_id, item_id, uom_id, quantity, desc_id, comp_ratio_a, comp_ratio_b, comp_ratio_c } = assignment;
 
       if (!pd_id || typeof pd_id !== 'string' || pd_id.trim() === '') {
         validationErrors.push(`Assignment ${index + 1}: pd_id is required and must be a non-empty string`);
@@ -831,6 +904,9 @@ exports.assignMaterial = async (req, res) => {
       }
       if (!Number.isInteger(quantity) || quantity <= 0) {
         validationErrors.push(`Assignment ${index + 1}: quantity is required and must be a positive integer`);
+      }
+      if (!desc_id || typeof desc_id !== 'string' || desc_id.trim() === '') {
+        validationErrors.push(`Assignment ${index + 1}: desc_id is required and must be a non-empty string`);
       }
       if (comp_ratio_a !== null && (!Number.isInteger(comp_ratio_a) || comp_ratio_a < 0)) {
         validationErrors.push(`Assignment ${index + 1}: comp_ratio_a must be a non-negative integer or null`);
@@ -852,10 +928,10 @@ exports.assignMaterial = async (req, res) => {
     }
 
     const insertedIds = [];
-    for (const { pd_id, site_id, item_id, uom_id, quantity, comp_ratio_a, comp_ratio_b, comp_ratio_c } of assignments) {
+    for (const { pd_id, site_id, item_id, uom_id, quantity, desc_id, comp_ratio_a, comp_ratio_b, comp_ratio_c } of assignments) {
       const [result] = await db.query(
-        'INSERT INTO material_assign (pd_id, site_id, item_id, uom_id, quantity, comp_ratio_a, comp_ratio_b, comp_ratio_c, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())',
-        [pd_id, site_id, item_id, uom_id, quantity, comp_ratio_a, comp_ratio_b, comp_ratio_c]
+        'INSERT INTO material_assign (pd_id, site_id, item_id, uom_id, quantity, desc_id, comp_ratio_a, comp_ratio_b, comp_ratio_c, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
+        [pd_id, site_id, item_id, uom_id, quantity, desc_id, comp_ratio_a, comp_ratio_b, comp_ratio_c]
       );
       insertedIds.push(result.insertId);
     }
@@ -870,7 +946,7 @@ exports.assignMaterial = async (req, res) => {
     if (error.code === 'ER_NO_REFERENCED_ROW_2') {
       return res.status(400).json({
         status: 'error',
-        message: 'Invalid reference: pd_id, site_id, item_id, or uom_id does not exist in the database',
+        message: 'Invalid reference: pd_id, site_id, item_id, uom_id, or desc_id does not exist in the database',
       });
     }
     res.status(500).json({
@@ -883,7 +959,71 @@ exports.assignMaterial = async (req, res) => {
 
 
 
+exports.fetchWorkDescriptions = async (req, res) => {
+  try {
+    const { site_id } = req.query;
 
+    if (!site_id) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'site_id is required',
+      });
+    }
+
+    // Fetch desc_ids from po_reckoner for the given site_id
+    const [poRows] = await db.query(
+      'SELECT DISTINCT desc_id FROM po_reckoner WHERE site_id = ?',
+      [site_id]
+    );
+
+    if (poRows.length === 0) {
+      return res.status(200).json({
+        status: 'success',
+        message: 'No work descriptions found for the selected site',
+        data: [],
+      });
+    }
+
+    const descIds = poRows.map(row => row.desc_id);
+
+    // Fetch already assigned desc_ids from material_assign for the site
+    const [assignedRows] = await db.query(
+      'SELECT DISTINCT desc_id FROM material_assign WHERE site_id = ? AND desc_id IS NOT NULL',
+      [site_id]
+    );
+    const assignedDescIds = assignedRows.map(row => row.desc_id);
+
+    // Filter out assigned desc_ids
+    const availableDescIds = descIds.filter(desc_id => !assignedDescIds.includes(desc_id));
+
+    if (availableDescIds.length === 0) {
+      return res.status(200).json({
+        status: 'success',
+        message: 'All work descriptions for this site are already assigned',
+        data: [],
+      });
+    }
+
+    // Fetch desc_name for available desc_ids
+    const [descRows] = await db.query(
+      'SELECT desc_id, desc_name FROM work_descriptions WHERE desc_id IN (?)',
+      [availableDescIds]
+    );
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Work descriptions fetched successfully',
+      data: descRows,
+    });
+  } catch (error) {
+    console.error('Error fetching work descriptions:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch work descriptions',
+      error: error.message,
+    });
+  }
+};
 
 
 

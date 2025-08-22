@@ -26,21 +26,17 @@
 //     {
 //       categoryName: "",
 //       categoryId: "",
-//       subcategories: [
+//       items: [
 //         {
-//           subcategoryName: "",
+//           itemNo: "",
+//           descId: "",
+//           descName: "",
 //           subcategoryId: "",
-//           items: [
-//             {
-//               itemNo: "",
-//               descId: "",
-//               descName: "",
-//               poQuantity: "",
-//               unitOfMeasure: "",
-//               rate: "",
-//               value: "",
-//             },
-//           ],
+//           subcategoryName: "",
+//           poQuantity: "",
+//           unitOfMeasure: "",
+//           rate: "",
+//           value: "",
 //         },
 //       ],
 //     },
@@ -307,43 +303,13 @@
 //         ...newCategories[categoryIndex],
 //         categoryName,
 //         categoryId: selectedCategory?.category_id || "",
-//         subcategories: [
-//           {
-//             subcategoryName: "",
-//             subcategoryId: "",
-//             items: [
-//               {
-//                 itemNo: "",
-//                 descId: "",
-//                 descName: "",
-//                 poQuantity: "",
-//                 unitOfMeasure: "",
-//                 rate: "",
-//                 value: "",
-//               },
-//             ],
-//           },
-//         ],
-//       };
-//       return { ...prev, categories: newCategories };
-//     });
-//   };
-
-//   const handleSubcategoryNameChange = (categoryIndex, subcatIndex, name) => {
-//     const selectedSubcat = subcategories.find((sc) => sc.subcategory_name === name);
-
-//     setFormData((prev) => {
-//       const newCategories = [...prev.categories];
-//       const newSubcategories = [...newCategories[categoryIndex].subcategories];
-//       newSubcategories[subcatIndex] = {
-//         ...newSubcategories[subcatIndex],
-//         subcategoryName: name,
-//         subcategoryId: selectedSubcat?.subcategory_id || "",
 //         items: [
 //           {
 //             itemNo: "",
 //             descId: "",
 //             descName: "",
+//             subcategoryId: "",
+//             subcategoryName: "",
 //             poQuantity: "",
 //             unitOfMeasure: "",
 //             rate: "",
@@ -351,38 +317,49 @@
 //           },
 //         ],
 //       };
-//       newCategories[categoryIndex].subcategories = newSubcategories;
 //       return { ...prev, categories: newCategories };
 //     });
 //   };
 
-//   const handleItemDescriptionChange = (categoryIndex, subcatIndex, itemIndex, value) => {
+//   const handleSubcategoryChange = (categoryIndex, itemIndex, value) => {
+//     const selectedSubcat = subcategories.find((sc) => sc.subcategory_name === value);
+
+//     setFormData((prev) => {
+//       const newCategories = [...prev.categories];
+//       const newItems = [...newCategories[categoryIndex].items];
+//       newItems[itemIndex] = {
+//         ...newItems[itemIndex],
+//         subcategoryName: value,
+//         subcategoryId: selectedSubcat?.subcategory_id || "",
+//       };
+//       newCategories[categoryIndex].items = newItems;
+//       return { ...prev, categories: newCategories };
+//     });
+//   };
+
+//   const handleItemDescriptionChange = (categoryIndex, itemIndex, value) => {
 //     const selectedItem = workItems.find((item) => item.desc_name === value);
 
 //     setFormData((prev) => {
 //       const newCategories = [...prev.categories];
-//       const newSubcategories = [...newCategories[categoryIndex].subcategories];
-//       const newItems = [...newSubcategories[subcatIndex].items];
+//       const newItems = [...newCategories[categoryIndex].items];
 //       newItems[itemIndex] = {
 //         ...newItems[itemIndex],
 //         descName: value,
 //         descId: selectedItem?.desc_id || "",
 //         unitOfMeasure: selectedItem?.unit_of_measure || "",
 //       };
-//       newSubcategories[subcatIndex].items = newItems;
-//       newCategories[categoryIndex].subcategories = newSubcategories;
+//       newCategories[categoryIndex].items = newItems;
 //       return { ...prev, categories: newCategories };
 //     });
 //   };
 
-//   const handleItemChange = (categoryIndex, subcatIndex, itemIndex, e) => {
+//   const handleItemChange = (categoryIndex, itemIndex, e) => {
 //     const { name, value } = e.target;
 
 //     setFormData((prev) => {
 //       const newCategories = [...prev.categories];
-//       const newSubcategories = [...newCategories[categoryIndex].subcategories];
-//       const newItems = [...newSubcategories[subcatIndex].items];
-
+//       const newItems = [...newCategories[categoryIndex].items];
 //       newItems[itemIndex] = {
 //         ...newItems[itemIndex],
 //         [name]: value,
@@ -394,8 +371,7 @@
 //         newItems[itemIndex].value = (parseFloat(quantity || 0) * parseFloat(rate || 0)).toFixed(2);
 //       }
 
-//       newSubcategories[subcatIndex].items = newItems;
-//       newCategories[categoryIndex].subcategories = newSubcategories;
+//       newCategories[categoryIndex].items = newItems;
 //       return { ...prev, categories: newCategories };
 //     });
 //   };
@@ -411,27 +387,22 @@
 //         {
 //           categoryName: "",
 //           categoryId: "",
-//           subcategories: [
+//           items: [
 //             {
-//               subcategoryName: "",
+//               itemNo: "",
+//               descId: "",
+//               descName: "",
 //               subcategoryId: "",
-//               items: [
-//                 {
-//                   itemNo: "",
-//                   descId: "",
-//                   descName: "",
-//                   poQuantity: "",
-//                   unitOfMeasure: "",
-//                   rate: "",
-//                   value: "",
-//                 },
-//               ],
+//               subcategoryName: "",
+//               poQuantity: "",
+//               unitOfMeasure: "",
+//               rate: "",
+//               value: "",
 //             },
 //           ],
 //         },
 //       ],
 //     }));
-//     // Set the new category as open by default
 //     setOpenCategories((prev) => ({ ...prev, [newCategoryIndex]: true }));
 //   };
 
@@ -444,7 +415,6 @@
 //       setOpenCategories((prev) => {
 //         const newOpenCategories = { ...prev };
 //         delete newOpenCategories[index];
-//         // Reindex the remaining categories
 //         const updatedOpenCategories = {};
 //         Object.keys(newOpenCategories).forEach((key) => {
 //           const numKey = parseInt(key);
@@ -459,77 +429,36 @@
 //     }
 //   };
 
-//   const addSubcategory = (categoryIndex, e) => {
+//   const addItemRow = (categoryIndex, e) => {
 //     e.preventDefault();
 //     e.stopPropagation();
 //     setFormData((prev) => {
 //       const newCategories = [...prev.categories];
-//       newCategories[categoryIndex].subcategories = [
-//         ...newCategories[categoryIndex].subcategories,
-//         {
-//           subcategoryName: "",
-//           subcategoryId: "",
-//           items: [
-//             {
-//               itemNo: "",
-//               descId: "",
-//               descName: "",
-//               poQuantity: "",
-//               unitOfMeasure: "",
-//               rate: "",
-//               value: "",
-//             },
-//           ],
-//         },
-//       ];
-//       return { ...prev, categories: newCategories };
-//     });
-//   };
-
-//   const removeSubcategory = (categoryIndex, subcatIndex) => {
-//     if (formData.categories[categoryIndex].subcategories.length > 1) {
-//       setFormData((prev) => {
-//         const newCategories = [...prev.categories];
-//         newCategories[categoryIndex].subcategories = newCategories[categoryIndex].subcategories.filter(
-//           (_, i) => i !== subcatIndex
-//         );
-//         return { ...prev, categories: newCategories };
-//       });
-//     }
-//   };
-
-//   const addItemRow = (categoryIndex, subcatIndex, e) => {
-//     e.preventDefault();
-//     e.stopPropagation();
-//     setFormData((prev) => {
-//       const newCategories = [...prev.categories];
-//       const newSubcategories = [...newCategories[categoryIndex].subcategories];
-//       newSubcategories[subcatIndex].items = [
-//         ...newSubcategories[subcatIndex].items,
+//       newCategories[categoryIndex].items = [
+//         ...newCategories[categoryIndex].items,
 //         {
 //           itemNo: "",
 //           descId: "",
 //           descName: "",
+//           subcategoryId: "",
+//           subcategoryName: "",
 //           poQuantity: "",
 //           unitOfMeasure: "",
 //           rate: "",
 //           value: "",
 //         },
 //       ];
-//       newCategories[categoryIndex].subcategories = newSubcategories;
 //       return { ...prev, categories: newCategories };
 //     });
 //   };
 
-//   const removeItemRow = (categoryIndex, subcatIndex, itemIndex) => {
-//     if (formData.categories[categoryIndex].subcategories[subcatIndex].items.length > 1) {
+//   const removeItemRow = (categoryIndex, itemIndex) => {
+//     if (formData.categories[categoryIndex].items.length > 1) {
 //       setFormData((prev) => {
 //         const newCategories = [...prev.categories];
-//         const newSubcategories = [...newCategories[categoryIndex].subcategories];
-//         newSubcategories[subcatIndex].items = newSubcategories[subcatIndex].items.filter(
+//         newCategories[categoryIndex].items = newCategories[categoryIndex].items.filter(
 //           (_, i) => i !== itemIndex
 //         );
-//         newCategories[categoryIndex].subcategories = newSubcategories;
 //         return { ...prev, categories: newCategories };
 //       });
 //     }
@@ -567,42 +496,50 @@
 //         if (!category.categoryId) {
 //           throw new Error("All categories must be selected.");
 //         }
-//         for (const subcategory of category.subcategories) {
-//           if (!subcategory.subcategoryId) {
-//             throw new Error("All subcategories must be selected.");
-//           }
-//           for (const item of subcategory.items) {
-//             if (
-//               !item.itemNo ||
-//               !item.descId ||
-//               !item.descName ||
-//               !item.poQuantity ||
-//               !item.unitOfMeasure ||
-//               !item.rate
-//             ) {
-//               throw new Error("All item fields must be filled.");
-//             }
+//         for (const item of category.items) {
+//           if (
+//             !item.itemNo ||
+//             !item.descId ||
+//             !item.descName ||
+//             !item.subcategoryId ||
+//             !item.poQuantity ||
+//             !item.unitOfMeasure ||
+//             !item.rate
+//           ) {
+//             throw new Error("All item fields must be filled.");
 //           }
 //         }
 //       }
 
+//       // Transform data to match backend structure
 //       const submissionData = {
 //         poNumber: formData.poNumber,
 //         siteId: formData.siteId,
-//         categories: formData.categories.map((category) => ({
-//           categoryId: category.categoryId,
-//           subcategories: category.subcategories.map((subcategory) => ({
-//             subcategoryId: subcategory.subcategoryId,
-//             items: subcategory.items.map((item) => ({
+//         categories: formData.categories.map((category) => {
+//           // Group items by subcategoryId
+//           const subcategoryMap = {};
+//           category.items.forEach((item) => {
+//             if (!subcategoryMap[item.subcategoryId]) {
+//               subcategoryMap[item.subcategoryId] = {
+//                 subcategoryId: item.subcategoryId,
+//                 items: [],
+//               };
+//             }
+//             subcategoryMap[item.subcategoryId].items.push({
 //               itemId: item.itemNo,
 //               descId: item.descId,
 //               poQuantity: item.poQuantity,
 //               uom: item.unitOfMeasure,
 //               rate: item.rate,
 //               value: item.value,
-//             })),
-//           })),
-//         })),
+//             });
+//           });
+
+//           return {
+//             categoryId: category.categoryId,
+//             subcategories: Object.values(subcategoryMap),
+//           };
+//         }),
 //       };
 
 //       await axios.post("http://localhost:5000/reckoner/reckoner", submissionData);
@@ -623,7 +560,7 @@
 //       setSelectedCompanyId("");
 //       setSelectedProject("");
 //       setSelectedSite("");
-//       setOpenCategories({ 0: true }); // Reset to first category open
+//       setOpenCategories({ 0: true });
 //       if (onCompanySelect) {
 //         onCompanySelect("");
 //       }
@@ -789,212 +726,163 @@
 
 //                 {openCategories[categoryIndex] && category.categoryName && (
 //                   <div className="space-y-6 mt-4 transition-all duration-300">
-//                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-//                       <h3 className="text-md font-semibold text-gray-700">Subcategories</h3>
+//                     <h3 className="text-md font-semibold text-gray-700">Items</h3>
+//                     <div className="overflow-x-auto">
+//                       <table className="min-w-full divide-y divide-gray-200">
+//                         <thead className={`${getRandomColor(categoryIndex + 1)}`}>
+//                           <tr>
+//                             <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+//                               Item No
+//                             </th>
+//                             <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+//                               Description
+//                             </th>
+//                             <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+//                               Subcategory
+//                             </th>
+//                             <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+//                               Qty
+//                             </th>
+//                             <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+//                               UOM
+//                             </th>
+//                             <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+//                               Rate
+//                             </th>
+//                             <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+//                               Value
+//                             </th>
+//                             <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+//                               Actions
+//                             </th>
+//                           </tr>
+//                         </thead>
+//                         <tbody className="bg-white divide-y divide-gray-200">
+//                           {category.items.map((item, itemIndex) => (
+//                             <tr
+//                               key={itemIndex}
+//                               className={itemIndex % 2 === 0 ? "bg-white" : "bg-gray-50"}
+//                             >
+//                               <td className="px-3 py-2 whitespace-nowrap">
+//                                 <input
+//                                   type="text"
+//                                   name="itemNo"
+//                                   value={item.itemNo}
+//                                   onChange={(e) => handleItemChange(categoryIndex, itemIndex, e)}
+//                                   className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border text-sm"
+//                                   required
+//                                   placeholder="Item No"
+//                                 />
+//                               </td>
+//                               <td className="px-3 py-2 whitespace-nowrap">
+//                                 <select
+//                                   name="descName"
+//                                   value={item.descName}
+//                                   onChange={(e) =>
+//                                     handleItemDescriptionChange(categoryIndex, itemIndex, e.target.value)
+//                                   }
+//                                   className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border text-sm"
+//                                   required
+//                                   disabled={loading.workItems}
+//                                 >
+//                                   <option value="" className="text-gray-500">Select Description</option>
+//                                   {workItems.map((item) => (
+//                                     <option key={item.desc_id} value={item.desc_name} className="py-2 px-3">
+//                                       {item.desc_name}
+//                                     </option>
+//                                   ))}
+//                                 </select>
+//                               </td>
+//                               <td className="px-3 py-2 whitespace-nowrap">
+//                                 <select
+//                                   name="subcategoryName"
+//                                   value={item.subcategoryName}
+//                                   onChange={(e) =>
+//                                     handleSubcategoryChange(categoryIndex, itemIndex, e.target.value)
+//                                   }
+//                                   className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border text-sm"
+//                                   required
+//                                   disabled={loading.subcategories}
+//                                 >
+//                                   <option value="" className="text-gray-500">Select Subcategory</option>
+//                                   {subcategories.map((subcat) => (
+//                                     <option key={subcat.subcategory_id} value={subcat.subcategory_name} className="py-2 px-3">
+//                                       {subcat.subcategory_name}
+//                                     </option>
+//                                   ))}
+//                                 </select>
+//                               </td>
+//                               <td className="px-3 py-2 whitespace-nowrap">
+//                                 <input
+//                                   type="number"
+//                                   name="poQuantity"
+//                                   value={item.poQuantity}
+//                                   onChange={(e) => handleItemChange(categoryIndex, itemIndex, e)}
+//                                   className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border text-sm"
+//                                   required
+//                                   min="0"
+//                                   step="0.01"
+//                                   placeholder="Qty"
+//                                 />
+//                               </td>
+//                               <td className="px-3 py-2 whitespace-nowrap">
+//                                 <input
+//                                   type="text"
+//                                   name="unitOfMeasure"
+//                                   value={item.unitOfMeasure}
+//                                   onChange={(e) => handleItemChange(categoryIndex, itemIndex, e)}
+//                                   className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border text-sm"
+//                                   required
+//                                   placeholder="UOM"
+//                                 />
+//                               </td>
+//                               <td className="px-3 py-2 whitespace-nowrap">
+//                                 <input
+//                                   type="number"
+//                                   name="rate"
+//                                   value={item.rate}
+//                                   onChange={(e) => handleItemChange(categoryIndex, itemIndex, e)}
+//                                   className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border text-sm"
+//                                   required
+//                                   min="0"
+//                                   step="0.01"
+//                                   placeholder="Rate"
+//                                 />
+//                               </td>
+//                               <td className="px-3 py-2 whitespace-nowrap">
+//                                 <input
+//                                   type="text"
+//                                   name="value"
+//                                   value={item.value}
+//                                   readOnly
+//                                   className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border bg-gray-100 text-sm"
+//                                 />
+//                               </td>
+//                               <td className="px-3 py-2 whitespace-nowrap">
+//                                 <button
+//                                   type="button"
+//                                   onClick={() => removeItemRow(categoryIndex, itemIndex)}
+//                                   className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 transition-colors duration-200 disabled:opacity-50"
+//                                   disabled={category.items.length <= 1}
+//                                 >
+//                                   Remove
+//                                 </button>
+//                               </td>
+//                             </tr>
+//                           ))}
+//                         </tbody>
+//                       </table>
+//                     </div>
+//                     <div className="mt-3">
 //                       <button
 //                         type="button"
-//                         onClick={(e) => addSubcategory(categoryIndex, e)}
+//                         onClick={(e) => addItemRow(categoryIndex, e)}
 //                         className="inline-flex items-center px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors duration-200"
 //                       >
 //                         <Plus className="w-4 h-4 mr-2" />
-//                         Add Subcategory
+//                         Add Item
 //                       </button>
 //                     </div>
-
-//                     {category.subcategories.map((subcategory, subcatIndex) => (
-//                       <div
-//                         key={subcatIndex}
-//                         className={`border rounded-lg p-4 space-y-4 ${getRandomColor(subcatIndex + 1)} border-2 shadow-sm`}
-//                       >
-//                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-//                           <div>
-//                             <label className="block text-sm font-semibold text-gray-700 mb-2">
-//                               Subcategory Name
-//                             </label>
-//                             <select
-//                               value={subcategory.subcategoryName}
-//                               onChange={(e) =>
-//                                 handleSubcategoryNameChange(categoryIndex, subcatIndex, e.target.value)
-//                               }
-//                               className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 border text-sm"
-//                               required
-//                               disabled={loading.subcategories}
-//                             >
-//                               <option value="" className="text-gray-500">Select Subcategory</option>
-//                               {subcategories.map((subcat) => (
-//                                 <option key={subcat.subcategory_id} value={subcat.subcategory_name} className="py-2 px-3">
-//                                   {subcat.subcategory_name}
-//                                 </option>
-//                               ))}
-//                             </select>
-//                           </div>
-//                           <div className="flex items-end justify-end">
-//                             {category.subcategories.length > 1 && (
-//                               <button
-//                                 type="button"
-//                                 onClick={() => removeSubcategory(categoryIndex, subcatIndex)}
-//                                 className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 transition-colors duration-200"
-//                               >
-//                                 Remove Subcategory
-//                               </button>
-//                             )}
-//                           </div>
-//                         </div>
-
-//                         {subcategory.subcategoryName && (
-//                           <div className="mt-4">
-//                             <h4 className="text-md font-semibold mb-3 text-gray-700">Items</h4>
-//                             <div className="overflow-x-auto">
-//                               <table className="min-w-full divide-y divide-gray-200">
-//                                 <thead className={`${getRandomColor(subcatIndex + 2)}`}>
-//                                   <tr>
-//                                     <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-//                                       Item No
-//                                     </th>
-//                                     <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-//                                       Description
-//                                     </th>
-//                                     <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-//                                       Qty
-//                                     </th>
-//                                     <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-//                                       UOM
-//                                     </th>
-//                                     <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-//                                       Rate
-//                                     </th>
-//                                     <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-//                                       Value
-//                                     </th>
-//                                     <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-//                                       Actions
-//                                     </th>
-//                                   </tr>
-//                                 </thead>
-//                                 <tbody className="bg-white divide-y divide-gray-200">
-//                                   {subcategory.items.map((item, itemIndex) => (
-//                                     <tr
-//                                       key={itemIndex}
-//                                       className={itemIndex % 2 === 0 ? "bg-white" : "bg-gray-50"}
-//                                     >
-//                                       <td className="px-3 py-2 whitespace-nowrap">
-//                                         <input
-//                                           type="text"
-//                                           name="itemNo"
-//                                           value={item.itemNo}
-//                                           onChange={(e) =>
-//                                             handleItemChange(categoryIndex, subcatIndex, itemIndex, e)
-//                                           }
-//                                           className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border text-sm"
-//                                           required
-//                                           placeholder="Item No"
-//                                         />
-//                                       </td>
-//                                       <td className="px-3 py-2 whitespace-nowrap">
-//                                         <select
-//                                           name="descName"
-//                                           value={item.descName}
-//                                           onChange={(e) =>
-//                                             handleItemDescriptionChange(
-//                                               categoryIndex,
-//                                               subcatIndex,
-//                                               itemIndex,
-//                                               e.target.value
-//                                             )
-//                                           }
-//                                           className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border text-sm"
-//                                           required
-//                                           disabled={loading.workItems}
-//                                         >
-//                                           <option value="" className="text-gray-500">Select Description</option>
-//                                           {workItems.map((item) => (
-//                                             <option key={item.desc_id} value={item.desc_name} className="py-2 px-3">
-//                                               {item.desc_name}
-//                                             </option>
-//                                           ))}
-//                                         </select>
-//                                       </td>
-//                                       <td className="px-3 py-2 whitespace-nowrap">
-//                                         <input
-//                                           type="number"
-//                                           name="poQuantity"
-//                                           value={item.poQuantity}
-//                                           onChange={(e) =>
-//                                             handleItemChange(categoryIndex, subcatIndex, itemIndex, e)
-//                                           }
-//                                           className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border text-sm"
-//                                           required
-//                                           min="0"
-//                                           step="0.01"
-//                                           placeholder="Qty"
-//                                         />
-//                                       </td>
-//                                       <td className="px-3 py-2 whitespace-nowrap">
-//                                         <input
-//                                           type="text"
-//                                           name="unitOfMeasure"
-//                                           value={item.unitOfMeasure}
-//                                           onChange={(e) =>
-//                                             handleItemChange(categoryIndex, subcatIndex, itemIndex, e)
-//                                           }
-//                                           className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border text-sm"
-//                                           required
-//                                           placeholder="UOM"
-//                                         />
-//                                       </td>
-//                                       <td className="px-3 py-2 whitespace-nowrap">
-//                                         <input
-//                                           type="number"
-//                                           name="rate"
-//                                           value={item.rate}
-//                                           onChange={(e) =>
-//                                             handleItemChange(categoryIndex, subcatIndex, itemIndex, e)
-//                                           }
-//                                           className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border text-sm"
-//                                           required
-//                                           min="0"
-//                                           step="0.01"
-//                                           placeholder="Rate"
-//                                         />
-//                                       </td>
-//                                       <td className="px-3 py-2 whitespace-nowrap">
-//                                         <input
-//                                           type="text"
-//                                           name="value"
-//                                           value={item.value}
-//                                           readOnly
-//                                           className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border bg-gray-100 text-sm"
-//                                         />
-//                                       </td>
-//                                       <td className="px-3 py-2 whitespace-nowrap">
-//                                         <button
-//                                           type="button"
-//                                           onClick={() => removeItemRow(categoryIndex, subcatIndex, itemIndex)}
-//                                           className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 transition-colors duration-200 disabled:opacity-50"
-//                                           disabled={subcategory.items.length <= 1}
-//                                         >
-//                                           Remove
-//                                         </button>
-//                                       </td>
-//                                     </tr>
-//                                   ))}
-//                                 </tbody>
-//                               </table>
-//                             </div>
-//                             <div className="mt-3">
-//                               <button
-//                                 type="button"
-//                                 onClick={(e) => addItemRow(categoryIndex, subcatIndex, e)}
-//                                 className="inline-flex items-center px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm transition-colors duration-200"
-//                               >
-//                                 <Plus className="w-4 h-4 mr-2" />
-//                                 Add Item
-//                               </button>
-//                             </div>
-//                           </div>
-//                         )}
-//                       </div>
-//                     ))}
 //                   </div>
 //                 )}
 //               </div>
@@ -1078,39 +966,10 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
-import { Plus, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, ChevronDown, ChevronUp, Save } from "lucide-react";
 
 const getRandomColor = (index) => {
   const colors = [
@@ -1140,8 +999,7 @@ const initialFormData = {
           itemNo: "",
           descId: "",
           descName: "",
-          subcategoryId: "",
-          subcategoryName: "",
+          subcategories: [],
           poQuantity: "",
           unitOfMeasure: "",
           rate: "",
@@ -1150,6 +1008,91 @@ const initialFormData = {
       ],
     },
   ],
+};
+
+const SearchableDropdown = ({ options, value, onChange, onCreate, placeholder, disabled, isLoading }) => {
+  const [searchTerm, setSearchTerm] = useState(value);
+  const [isOpen, setIsOpen] = useState(false);
+  const [filteredOptions, setFilteredOptions] = useState(options);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    setSearchTerm(value);
+    setFilteredOptions(
+      options.filter((option) =>
+        option.name.toLowerCase().includes(value.toLowerCase())
+      )
+    );
+  }, [value, options]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSearch = (e) => {
+    const term = e.target.value;
+    setSearchTerm(term);
+    setFilteredOptions(
+      options.filter((option) =>
+        option.name.toLowerCase().includes(term.toLowerCase())
+      )
+    );
+    setIsOpen(true);
+  };
+
+  const handleSelect = (option) => {
+    onChange(option.name);
+    setSearchTerm(option.name);
+    setIsOpen(false);
+  };
+
+  const handleCreate = async () => {
+    if (searchTerm && !options.some((opt) => opt.name.toLowerCase() === searchTerm.toLowerCase())) {
+      await onCreate(searchTerm);
+      setIsOpen(false);
+    }
+  };
+
+  return (
+    <div className="relative w-full" ref={dropdownRef}>
+      <input
+        type="text"
+        value={searchTerm}
+        onChange={handleSearch}
+        onFocus={() => setIsOpen(true)}
+        placeholder={placeholder}
+        className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 border text-sm"
+        disabled={disabled || isLoading}
+      />
+      {isOpen && (
+        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+          {filteredOptions.length === 0 && searchTerm && (
+            <div
+              className="px-3 py-2 text-sm text-indigo-600 cursor-pointer hover:bg-indigo-100"
+              onClick={handleCreate}
+            >
+              Add "{searchTerm}"
+            </div>
+          )}
+          {filteredOptions.map((option) => (
+            <div
+              key={option.id}
+              className="px-3 py-2 text-sm cursor-pointer hover:bg-indigo-100"
+              onClick={() => handleSelect(option)}
+            >
+              {option.name}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 };
 
 const CreateReckoner = ({ onShowCompanyModal, onShowProjectModal, selectedCompany, onCompanySelect, companies }) => {
@@ -1162,6 +1105,7 @@ const CreateReckoner = ({ onShowCompanyModal, onShowProjectModal, selectedCompan
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
   const [workItems, setWorkItems] = useState([]);
+  const [newSubcategory, setNewSubcategory] = useState("");
   const [loading, setLoading] = useState({
     companies: false,
     projects: false,
@@ -1172,7 +1116,7 @@ const CreateReckoner = ({ onShowCompanyModal, onShowProjectModal, selectedCompan
     submitting: false,
     processing: false,
   });
-  const [openCategories, setOpenCategories] = useState({ 0: true }); // First category open by default
+  const [openCategories, setOpenCategories] = useState({ 0: true });
 
   useEffect(() => {
     setSelectedCompanyId(selectedCompany || "");
@@ -1402,23 +1346,21 @@ const CreateReckoner = ({ onShowCompanyModal, onShowProjectModal, selectedCompan
     }
   };
 
-  const handleCategoryChange = (categoryIndex, e) => {
-    const categoryName = e.target.value;
-    const selectedCategory = categories.find((cat) => cat.category_name === categoryName);
+  const handleCategoryChange = (categoryIndex, value) => {
+    const selectedCategory = categories.find((cat) => cat.category_name === value);
 
     setFormData((prev) => {
       const newCategories = [...prev.categories];
       newCategories[categoryIndex] = {
         ...newCategories[categoryIndex],
-        categoryName,
+        categoryName: value,
         categoryId: selectedCategory?.category_id || "",
         items: [
           {
             itemNo: "",
             descId: "",
             descName: "",
-            subcategoryId: "",
-            subcategoryName: "",
+            subcategories: [],
             poQuantity: "",
             unitOfMeasure: "",
             rate: "",
@@ -1430,20 +1372,36 @@ const CreateReckoner = ({ onShowCompanyModal, onShowProjectModal, selectedCompan
     });
   };
 
-  const handleSubcategoryChange = (categoryIndex, itemIndex, value) => {
-    const selectedSubcat = subcategories.find((sc) => sc.subcategory_name === value);
-
-    setFormData((prev) => {
-      const newCategories = [...prev.categories];
-      const newItems = [...newCategories[categoryIndex].items];
-      newItems[itemIndex] = {
-        ...newItems[itemIndex],
-        subcategoryName: value,
-        subcategoryId: selectedSubcat?.subcategory_id || "",
-      };
-      newCategories[categoryIndex].items = newItems;
-      return { ...prev, categories: newCategories };
-    });
+  const handleCreateCategory = async (categoryName) => {
+    try {
+      const response = await axios.post("http://localhost:5000/reckoner/categories", { category_name: categoryName });
+      const newCategory = response.data.data;
+      setCategories((prev) => [...prev, newCategory]);
+      Swal.fire({
+        position: "top-end",
+        icon: "success",
+        title: "Category created successfully!",
+        showConfirmButton: false,
+        timer: 2000,
+        toast: true,
+        background: "#ecfdf5",
+        iconColor: "#10b981",
+      });
+      return newCategory;
+    } catch (err) {
+      Swal.fire({
+        position: "top-end",
+        icon: "error",
+        title: "Failed to create category",
+        text: err.response?.data?.message || "Please try again",
+        showConfirmButton: false,
+        timer: 3000,
+        toast: true,
+        background: "#fef2f2",
+        iconColor: "#ef4444",
+      });
+      throw err;
+    }
   };
 
   const handleItemDescriptionChange = (categoryIndex, itemIndex, value) => {
@@ -1452,15 +1410,134 @@ const CreateReckoner = ({ onShowCompanyModal, onShowProjectModal, selectedCompan
     setFormData((prev) => {
       const newCategories = [...prev.categories];
       const newItems = [...newCategories[categoryIndex].items];
+      const item = newItems[itemIndex];
+
+      // Select the first two subcategories by default if they exist
+      const defaultSubcategories = subcategories.slice(0, 2).map((subcat) => ({
+        subcategoryId: subcat.subcategory_id,
+        subcategoryName: subcat.subcategory_name,
+        poQuantity: item.poQuantity || "0",
+        rate: Math.floor((parseInt(item.rate) || 0) / (subcategories.length >= 2 ? 2 : subcategories.length)).toString(),
+        value: ((parseFloat(item.poQuantity) || 0) * Math.floor((parseInt(item.rate) || 0) / (subcategories.length >= 2 ? 2 : subcategories.length))).toFixed(2),
+      }));
+
       newItems[itemIndex] = {
-        ...newItems[itemIndex],
+        ...item,
         descName: value,
         descId: selectedItem?.desc_id || "",
         unitOfMeasure: selectedItem?.unit_of_measure || "",
+        subcategories: defaultSubcategories,
       };
       newCategories[categoryIndex].items = newItems;
       return { ...prev, categories: newCategories };
     });
+  };
+
+  const handleCreateWorkItem = async (descName) => {
+    try {
+      const response = await axios.post("http://localhost:5000/reckoner/work-items", { desc_name: descName });
+      const newWorkItem = response.data.data;
+      setWorkItems((prev) => [...prev, newWorkItem]);
+      Swal.fire({
+        position: "top-end",
+        icon: "success",
+        title: "Work item created successfully!",
+        showConfirmButton: false,
+        timer: 2000,
+        toast: true,
+        background: "#ecfdf5",
+        iconColor: "#10b981",
+      });
+      return newWorkItem;
+    } catch (err) {
+      Swal.fire({
+        position: "top-end",
+        icon: "error",
+        title: "Failed to create work item",
+        text: err.response?.data?.message || "Please try again",
+        showConfirmButton: false,
+        timer: 3000,
+        toast: true,
+        background: "#fef2f2",
+        iconColor: "#ef4444",
+      });
+      throw err;
+    }
+  };
+
+  const handleSubcategorySelection = (categoryIndex, itemIndex, subcategoryId, checked) => {
+    setFormData((prev) => {
+      const newCategories = [...prev.categories];
+      const newItems = [...newCategories[categoryIndex].items];
+      const item = newItems[itemIndex];
+
+      let updatedSubcategories;
+      if (checked) {
+        const subcat = subcategories.find((sc) => sc.subcategory_id === subcategoryId);
+        if (!subcat) return prev;
+
+        updatedSubcategories = [
+          ...item.subcategories,
+          {
+            subcategoryId: subcat.subcategory_id,
+            subcategoryName: subcat.subcategory_name,
+            poQuantity: item.poQuantity || "0",
+            rate: Math.floor((parseInt(item.rate) || 0) / (item.subcategories.length + 1)).toString(),
+            value: ((parseFloat(item.poQuantity) || 0) * Math.floor((parseInt(item.rate) || 0) / (item.subcategories.length + 1))).toFixed(2),
+          },
+        ];
+      } else {
+        updatedSubcategories = item.subcategories.filter((sc) => sc.subcategoryId !== subcategoryId);
+      }
+
+      const splitRate = updatedSubcategories.length > 0 ? Math.floor((parseInt(item.rate) || 0) / updatedSubcategories.length) : 0;
+      updatedSubcategories = updatedSubcategories.map((subcat) => ({
+        ...subcat,
+        rate: splitRate.toString(),
+        value: ((parseFloat(item.poQuantity) || 0) * splitRate).toFixed(2),
+      }));
+
+      newItems[itemIndex] = {
+        ...item,
+        subcategories: updatedSubcategories,
+      };
+
+      newCategories[categoryIndex].items = newItems;
+      return { ...prev, categories: newCategories };
+    });
+  };
+
+  const handleCreateSubcategory = async (categoryIndex, itemIndex) => {
+    if (!newSubcategory) return;
+    try {
+      const response = await axios.post("http://localhost:5000/reckoner/subcategories", { subcategory_name: newSubcategory });
+      const newSubcat = response.data.data;
+      setSubcategories((prev) => [...prev, newSubcat]);
+      setNewSubcategory("");
+      handleSubcategorySelection(categoryIndex, itemIndex, newSubcat.subcategory_id, true);
+      Swal.fire({
+        position: "top-end",
+        icon: "success",
+        title: "Subcategory created successfully!",
+        showConfirmButton: false,
+        timer: 2000,
+        toast: true,
+        background: "#ecfdf5",
+        iconColor: "#10b981",
+      });
+    } catch (err) {
+      Swal.fire({
+        position: "top-end",
+        icon: "error",
+        title: "Failed to create subcategory",
+        text: err.response?.data?.message || "Please try again",
+        showConfirmButton: false,
+        timer: 3000,
+        toast: true,
+        background: "#fef2f2",
+        iconColor: "#ef4444",
+      });
+    }
   };
 
   const handleItemChange = (categoryIndex, itemIndex, e) => {
@@ -1469,20 +1546,118 @@ const CreateReckoner = ({ onShowCompanyModal, onShowProjectModal, selectedCompan
     setFormData((prev) => {
       const newCategories = [...prev.categories];
       const newItems = [...newCategories[categoryIndex].items];
+      const item = newItems[itemIndex];
+
       newItems[itemIndex] = {
-        ...newItems[itemIndex],
+        ...item,
         [name]: value,
       };
 
       if (name === "poQuantity" || name === "rate") {
-        const quantity = name === "poQuantity" ? value : newItems[itemIndex].poQuantity;
-        const rate = name === "rate" ? value : newItems[itemIndex].rate;
-        newItems[itemIndex].value = (parseFloat(quantity || 0) * parseFloat(rate || 0)).toFixed(2);
+        const quantity = name === "poQuantity" ? parseFloat(value) || 0 : parseFloat(item.poQuantity) || 0;
+        const rate = name === "rate" ? Math.floor(parseFloat(value) || 0) : parseInt(item.rate) || 0;
+
+        const updatedSubcategories = item.subcategories.map((subcat) => {
+          const splitRate = item.subcategories.length > 0 ? Math.floor(rate / item.subcategories.length) : 0;
+          return {
+            ...subcat,
+            poQuantity: quantity.toString(),
+            rate: splitRate.toString(),
+            value: (quantity * splitRate).toFixed(2),
+          };
+        });
+
+        newItems[itemIndex] = {
+          ...newItems[itemIndex],
+          rate: rate.toString(),
+          subcategories: updatedSubcategories,
+          value: (quantity * rate).toFixed(2),
+        };
       }
 
       newCategories[categoryIndex].items = newItems;
       return { ...prev, categories: newCategories };
     });
+  };
+
+  const handleSubcategoryRateChange = (categoryIndex, itemIndex, subcategoryIndex, e) => {
+    const { value } = e.target;
+    const newRate = Math.floor(parseFloat(value) || 0);
+
+    setFormData((prev) => {
+      const newCategories = [...prev.categories];
+      const newItems = [...newCategories[categoryIndex].items];
+      const item = newItems[itemIndex];
+      const updatedSubcategories = [...item.subcategories];
+
+      // Update the rate of the changed subcategory
+      updatedSubcategories[subcategoryIndex] = {
+        ...updatedSubcategories[subcategoryIndex],
+        rate: newRate.toString(),
+        value: ((parseFloat(item.poQuantity) || 0) * newRate).toFixed(2),
+      };
+
+      // Calculate remaining rate to distribute among other subcategories
+      const itemRate = parseInt(item.rate) || 0;
+      const remainingRate = itemRate - newRate;
+      const otherSubcategoriesCount = updatedSubcategories.length - 1;
+
+      // Distribute remaining rate equally among other subcategories
+      if (otherSubcategoriesCount > 0) {
+        const splitRate = Math.floor(remainingRate / otherSubcategoriesCount);
+        updatedSubcategories.forEach((subcat, index) => {
+          if (index !== subcategoryIndex) {
+            updatedSubcategories[index] = {
+              ...subcat,
+              rate: splitRate.toString(),
+              value: ((parseFloat(item.poQuantity) || 0) * splitRate).toFixed(2),
+            };
+          }
+        });
+      }
+
+      newItems[itemIndex] = {
+        ...item,
+        subcategories: updatedSubcategories,
+        value: ((parseFloat(item.poQuantity) || 0) * itemRate).toFixed(2),
+      };
+
+      newCategories[categoryIndex].items = newItems;
+      return { ...prev, categories: newCategories };
+    });
+  };
+
+  const isSubmitDisabled = () => {
+    if (!formData.siteId || loading.submitting || loading.processing) {
+      return true;
+    }
+    for (const category of formData.categories) {
+      if (!category.categoryId) {
+        return true;
+      }
+      for (const item of category.items) {
+        if (
+          !item.itemNo ||
+          !item.descId ||
+          !item.descName ||
+          item.subcategories.length === 0 ||
+          !item.poQuantity ||
+          !item.unitOfMeasure ||
+          !item.rate
+        ) {
+          return true;
+        }
+        const itemRate = parseInt(item.rate) || 0;
+        const totalSubcategoryRate = item.subcategories.reduce(
+          (sum, subcat) => sum + (parseInt(subcat.rate) || 0),
+          0
+        );
+        if (totalSubcategoryRate !== itemRate) {
+          return true;
+        }
+      }
+    }
+    return false;
   };
 
   const addCategory = (e) => {
@@ -1501,8 +1676,7 @@ const CreateReckoner = ({ onShowCompanyModal, onShowProjectModal, selectedCompan
               itemNo: "",
               descId: "",
               descName: "",
-              subcategoryId: "",
-              subcategoryName: "",
+              subcategories: [],
               poQuantity: "",
               unitOfMeasure: "",
               rate: "",
@@ -1549,8 +1723,7 @@ const CreateReckoner = ({ onShowCompanyModal, onShowProjectModal, selectedCompan
           itemNo: "",
           descId: "",
           descName: "",
-          subcategoryId: "",
-          subcategoryName: "",
+          subcategories: [],
           poQuantity: "",
           unitOfMeasure: "",
           rate: "",
@@ -1610,37 +1783,38 @@ const CreateReckoner = ({ onShowCompanyModal, onShowProjectModal, selectedCompan
             !item.itemNo ||
             !item.descId ||
             !item.descName ||
-            !item.subcategoryId ||
+            item.subcategories.length === 0 ||
             !item.poQuantity ||
             !item.unitOfMeasure ||
             !item.rate
           ) {
-            throw new Error("All item fields must be filled.");
+            throw new Error("All item fields must be filled and at least one subcategory selected.");
           }
         }
       }
 
-      // Transform data to match backend structure
       const submissionData = {
         poNumber: formData.poNumber,
         siteId: formData.siteId,
         categories: formData.categories.map((category) => {
-          // Group items by subcategoryId
           const subcategoryMap = {};
+
           category.items.forEach((item) => {
-            if (!subcategoryMap[item.subcategoryId]) {
-              subcategoryMap[item.subcategoryId] = {
-                subcategoryId: item.subcategoryId,
-                items: [],
-              };
-            }
-            subcategoryMap[item.subcategoryId].items.push({
-              itemId: item.itemNo,
-              descId: item.descId,
-              poQuantity: item.poQuantity,
-              uom: item.unitOfMeasure,
-              rate: item.rate,
-              value: item.value,
+            item.subcategories.forEach((subcat) => {
+              if (!subcategoryMap[subcat.subcategoryId]) {
+                subcategoryMap[subcat.subcategoryId] = {
+                  subcategoryId: subcat.subcategoryId,
+                  items: [],
+                };
+              }
+              subcategoryMap[subcat.subcategoryId].items.push({
+                itemId: item.itemNo,
+                descId: item.descId,
+                poQuantity: subcat.poQuantity,
+                uom: item.unitOfMeasure,
+                rate: subcat.rate,
+                value: subcat.value,
+              });
             });
           });
 
@@ -1791,21 +1965,20 @@ const CreateReckoner = ({ onShowCompanyModal, onShowProjectModal, selectedCompan
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">Category Name</label>
-                      <select
-                        name="categoryName"
+                      <SearchableDropdown
+                        options={categories.map((cat) => ({ id: cat.category_id, name: cat.category_name }))}
                         value={category.categoryName}
-                        onChange={(e) => handleCategoryChange(categoryIndex, e)}
-                        className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 border text-sm"
-                        required
+                        onChange={(value) => handleCategoryChange(categoryIndex, value)}
+                        onCreate={async (name) => {
+                          const newCategory = await handleCreateCategory(name);
+                          if (newCategory) {
+                            handleCategoryChange(categoryIndex, newCategory.category_name);
+                          }
+                        }}
+                        placeholder="Search or add category"
                         disabled={loading.categories}
-                      >
-                        <option value="" className="text-gray-500">Select Category</option>
-                        {categories.map((cat) => (
-                          <option key={cat.category_id} value={cat.category_name} className="py-2 px-3">
-                            {cat.category_name}
-                          </option>
-                        ))}
-                      </select>
+                        isLoading={loading.categories}
+                      />
                     </div>
                     <div className="flex items-end justify-end">
                       {formData.categories.length > 1 && (
@@ -1847,9 +2020,6 @@ const CreateReckoner = ({ onShowCompanyModal, onShowProjectModal, selectedCompan
                               Description
                             </th>
                             <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                              Subcategory
-                            </th>
-                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
                               Qty
                             </th>
                             <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
@@ -1868,116 +2038,206 @@ const CreateReckoner = ({ onShowCompanyModal, onShowProjectModal, selectedCompan
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                           {category.items.map((item, itemIndex) => (
-                            <tr
-                              key={itemIndex}
-                              className={itemIndex % 2 === 0 ? "bg-white" : "bg-gray-50"}
-                            >
-                              <td className="px-3 py-2 whitespace-nowrap">
-                                <input
-                                  type="text"
-                                  name="itemNo"
-                                  value={item.itemNo}
-                                  onChange={(e) => handleItemChange(categoryIndex, itemIndex, e)}
-                                  className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border text-sm"
-                                  required
-                                  placeholder="Item No"
-                                />
-                              </td>
-                              <td className="px-3 py-2 whitespace-nowrap">
-                                <select
-                                  name="descName"
-                                  value={item.descName}
-                                  onChange={(e) =>
-                                    handleItemDescriptionChange(categoryIndex, itemIndex, e.target.value)
-                                  }
-                                  className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border text-sm"
-                                  required
-                                  disabled={loading.workItems}
-                                >
-                                  <option value="" className="text-gray-500">Select Description</option>
-                                  {workItems.map((item) => (
-                                    <option key={item.desc_id} value={item.desc_name} className="py-2 px-3">
-                                      {item.desc_name}
-                                    </option>
-                                  ))}
-                                </select>
-                              </td>
-                              <td className="px-3 py-2 whitespace-nowrap">
-                                <select
-                                  name="subcategoryName"
-                                  value={item.subcategoryName}
-                                  onChange={(e) =>
-                                    handleSubcategoryChange(categoryIndex, itemIndex, e.target.value)
-                                  }
-                                  className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border text-sm"
-                                  required
-                                  disabled={loading.subcategories}
-                                >
-                                  <option value="" className="text-gray-500">Select Subcategory</option>
-                                  {subcategories.map((subcat) => (
-                                    <option key={subcat.subcategory_id} value={subcat.subcategory_name} className="py-2 px-3">
-                                      {subcat.subcategory_name}
-                                    </option>
-                                  ))}
-                                </select>
-                              </td>
-                              <td className="px-3 py-2 whitespace-nowrap">
-                                <input
-                                  type="number"
-                                  name="poQuantity"
-                                  value={item.poQuantity}
-                                  onChange={(e) => handleItemChange(categoryIndex, itemIndex, e)}
-                                  className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border text-sm"
-                                  required
-                                  min="0"
-                                  step="0.01"
-                                  placeholder="Qty"
-                                />
-                              </td>
-                              <td className="px-3 py-2 whitespace-nowrap">
-                                <input
-                                  type="text"
-                                  name="unitOfMeasure"
-                                  value={item.unitOfMeasure}
-                                  onChange={(e) => handleItemChange(categoryIndex, itemIndex, e)}
-                                  className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border text-sm"
-                                  required
-                                  placeholder="UOM"
-                                />
-                              </td>
-                              <td className="px-3 py-2 whitespace-nowrap">
-                                <input
-                                  type="number"
-                                  name="rate"
-                                  value={item.rate}
-                                  onChange={(e) => handleItemChange(categoryIndex, itemIndex, e)}
-                                  className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border text-sm"
-                                  required
-                                  min="0"
-                                  step="0.01"
-                                  placeholder="Rate"
-                                />
-                              </td>
-                              <td className="px-3 py-2 whitespace-nowrap">
-                                <input
-                                  type="text"
-                                  name="value"
-                                  value={item.value}
-                                  readOnly
-                                  className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border bg-gray-100 text-sm"
-                                />
-                              </td>
-                              <td className="px-3 py-2 whitespace-nowrap">
-                                <button
-                                  type="button"
-                                  onClick={() => removeItemRow(categoryIndex, itemIndex)}
-                                  className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 transition-colors duration-200 disabled:opacity-50"
-                                  disabled={category.items.length <= 1}
-                                >
-                                  Remove
-                                </button>
-                              </td>
-                            </tr>
+                            <React.Fragment key={itemIndex}>
+                              <tr className={itemIndex % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                                <td className="px-3 py-2 whitespace-nowrap">
+                                  <input
+                                    type="text"
+                                    name="itemNo"
+                                    value={item.itemNo}
+                                    onChange={(e) => handleItemChange(categoryIndex, itemIndex, e)}
+                                    className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border text-sm"
+                                    required
+                                    placeholder="Item No"
+                                  />
+                                </td>
+                                <td className="px-3 py-2 w-[250px] whitespace-nowrap">
+                                  <SearchableDropdown
+                                    options={workItems.map((item) => ({ id: item.desc_id, name: item.desc_name }))}
+                                    value={item.descName}
+                                    onChange={(value) => handleItemDescriptionChange(categoryIndex, itemIndex, value)}
+                                    onCreate={async (name) => {
+                                      const newWorkItem = await handleCreateWorkItem(name);
+                                      if (newWorkItem) {
+                                        handleItemDescriptionChange(categoryIndex, itemIndex, newWorkItem.desc_name);
+                                      }
+                                    }}
+                                    placeholder="Search or add description"
+                                    disabled={loading.workItems}
+                                    isLoading={loading.workItems}
+                                  />
+                                </td>
+                                <td className="px-3 py-2 whitespace-nowrap">
+                                  <input
+                                    type="number"
+                                    name="poQuantity"
+                                    value={item.poQuantity}
+                                    onChange={(e) => handleItemChange(categoryIndex, itemIndex, e)}
+                                    className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border text-sm"
+                                    required
+                                    min="0"
+                                    step="0.01"
+                                    placeholder="Qty"
+                                  />
+                                </td>
+                                <td className="px-3 py-2 whitespace-nowrap">
+                                  <input
+                                    type="text"
+                                    name="unitOfMeasure"
+                                    value={item.unitOfMeasure}
+                                    onChange={(e) => handleItemChange(categoryIndex, itemIndex, e)}
+                                    className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border text-sm"
+                                    required
+                                    placeholder="UOM"
+                                  />
+                                </td>
+                                <td className="px-3 py-2 whitespace-nowrap">
+                                  <input
+                                    type="number"
+                                    name="rate"
+                                    value={item.rate}
+                                    onChange={(e) => handleItemChange(categoryIndex, itemIndex, e)}
+                                    className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border text-sm"
+                                    required
+                                    min="0"
+                                    step="1"
+                                    placeholder="Rate"
+                                  />
+                                </td>
+                                <td className="px-3 py-2 whitespace-nowrap">
+                                  <input
+                                    type="text"
+                                    name="value"
+                                    value={item.value}
+                                    readOnly
+                                    className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border bg-gray-100 text-sm"
+                                  />
+                                </td>
+                                <td className="px-3 py-2 whitespace-nowrap">
+                                  <button
+                                    type="button"
+                                    onClick={() => removeItemRow(categoryIndex, itemIndex)}
+                                    className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 transition-colors duration-200 disabled:opacity-50"
+                                    disabled={category.items.length <= 1}
+                                  >
+                                    Remove
+                                  </button>
+                                </td>
+                              </tr>
+                              <tr className="bg-gray-100">
+                                <td colSpan="7" className="px-3 py-2">
+                                  <div className="mb-2">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <label className="block text-sm font-semibold text-gray-700">Select Subcategories</label>
+                                      <div className="flex items-center">
+                                        <input
+                                          type="text"
+                                          value={newSubcategory}
+                                          onChange={(e) => setNewSubcategory(e.target.value)}
+                                          placeholder="Add subcategory"
+                                          className="rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border text-sm mr-2"
+                                        />
+                                        {newSubcategory && (
+                                          <button
+                                            type="button"
+                                            onClick={() => handleCreateSubcategory(categoryIndex, itemIndex)}
+                                            className="inline-flex items-center p-2 text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 transition-colors duration-200"
+                                          >
+                                            <Save className="w-4 h-4" />
+                                          </button>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div className="max-h-32 overflow-y-auto border border-gray-300 rounded-lg p-2">
+                                      {subcategories.reduce((acc, subcat, index) => {
+                                        const chunkIndex = Math.floor(index / 7);
+                                        if (!acc[chunkIndex]) {
+                                          acc[chunkIndex] = [];
+                                        }
+                                        acc[chunkIndex].push(subcat);
+                                        return acc;
+                                      }, []).map((chunk, chunkIndex) => (
+                                        <div
+                                          key={`chunk-${chunkIndex}`}
+                                          className="flex flex-wrap mb-2"
+                                        >
+                                          {chunk.map((subcat) => (
+                                            <div key={subcat.subcategory_id} className="flex items-center mb-1 w-[13%]">
+                                              <input
+                                                type="checkbox"
+                                                id={`subcat-${categoryIndex}-${itemIndex}-${subcat.subcategory_id}`}
+                                                checked={item.subcategories.some((sc) => sc.subcategoryId === subcat.subcategory_id)}
+                                                onChange={(e) => handleSubcategorySelection(categoryIndex, itemIndex, subcat.subcategory_id, e.target.checked)}
+                                                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                                disabled={loading.subcategories || !item.descName}
+                                              />
+                                              <label
+                                                htmlFor={`subcat-${categoryIndex}-${itemIndex}-${subcat.subcategory_id}`}
+                                                className="ml-2 text-sm text-gray-700"
+                                              >
+                                                {subcat.subcategory_name}
+                                              </label>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                              {item.subcategories.length > 0 && (
+                                <tr className="bg-gray-50">
+                                  <td colSpan="7" className="px-3 py-2">
+                                    <div className="mb-2">
+                                      <h4 className="text-sm font-semibold text-gray-700 mb-2">Subcategory Details</h4>
+                                      <table className="min-w-full divide-y divide-gray-200">
+                                        <thead className="bg-gray-200">
+                                          <tr>
+                                            <th className="px-3 py-1 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                                              Subcategory
+                                            </th>
+                                            <th className="px-3 py-1 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                                              Qty
+                                            </th>
+                                            <th className="px-3 py-1 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                                              Rate
+                                            </th>
+                                            <th className="px-3 py-1 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                                              Value
+                                            </th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {item.subcategories.map((subcat, subcatIndex) => (
+                                            <tr key={subcatIndex} className={subcatIndex % 2 === 0 ? "bg-white" : "bg-gray-100"}>
+                                              <td className="px-3 py-1 whitespace-nowrap text-sm">
+                                                {subcat.subcategoryName}
+                                              </td>
+                                              <td className="px-3 py-1 whitespace-nowrap text-sm">
+                                                {subcat.poQuantity}
+                                              </td>
+                                              <td className="px-3 py-1 whitespace-nowrap">
+                                                <input
+                                                  type="number"
+                                                  value={subcat.rate}
+                                                  onChange={(e) => handleSubcategoryRateChange(categoryIndex, itemIndex, subcatIndex, e)}
+                                                  className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-1 border text-sm"
+                                                  min="0"
+                                                  step="1"
+                                                />
+                                              </td>
+                                              <td className="px-3 py-1 whitespace-nowrap text-sm">
+                                                {subcat.value}
+                                              </td>
+                                            </tr>
+                                          ))}
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                  </td>
+                                </tr>
+                              )}
+                            </React.Fragment>
                           ))}
                         </tbody>
                       </table>
@@ -2001,8 +2261,8 @@ const CreateReckoner = ({ onShowCompanyModal, onShowProjectModal, selectedCompan
           <div className="pt-4 flex justify-end">
             <button
               type="submit"
-              className="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200"
-              disabled={loading.submitting || loading.processing}
+              className="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isSubmitDisabled()}
             >
               {loading.submitting ? (
                 <>

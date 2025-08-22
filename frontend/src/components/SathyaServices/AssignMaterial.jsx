@@ -15,6 +15,9 @@
 //       item_id: "",
 //       uom_id: "",
 //       quantity: "",
+//       comp_ratio_a: "",
+//       comp_ratio_b: "",
+//       comp_ratio_c: "",
 //     },
 //   ]);
 //   const [loading, setLoading] = useState({
@@ -94,7 +97,7 @@
 //     const pd_id = e.target.value;
 //     setSelectedProject(pd_id);
 //     setSelectedSite("");
-//     setRows([{ item_id: "", uom_id: "", quantity: "" }]);
+//     setRows([{ item_id: "", uom_id: "", quantity: "", comp_ratio_a: "", comp_ratio_b: "", comp_ratio_c: "" }]);
 //     setError(null);
 //     if (pd_id) {
 //       await fetchSites(pd_id);
@@ -106,7 +109,7 @@
 //   // Handle site selection
 //   const handleSiteChange = (e) => {
 //     setSelectedSite(e.target.value);
-//     setRows([{ item_id: "", uom_id: "", quantity: "" }]);
+//     setRows([{ item_id: "", uom_id: "", quantity: "", comp_ratio_a: "", comp_ratio_b: "", comp_ratio_c: "" }]);
 //     setError(null);
 //   };
 
@@ -127,6 +130,9 @@
 //         item_id: "",
 //         uom_id: "",
 //         quantity: "",
+//         comp_ratio_a: "",
+//         comp_ratio_b: "",
+//         comp_ratio_c: "",
 //       },
 //     ]);
 //     setError(null);
@@ -180,6 +186,9 @@
 //         item_id: row.item_id,
 //         uom_id: parseInt(row.uom_id),
 //         quantity: parseInt(row.quantity),
+//         comp_ratio_a: row.comp_ratio_a ? parseInt(row.comp_ratio_a) : null,
+//         comp_ratio_b: row.comp_ratio_b ? parseInt(row.comp_ratio_b) : null,
+//         comp_ratio_c: row.comp_ratio_c ? parseInt(row.comp_ratio_c) : null,
 //       }));
 
 //       await axios.post("http://localhost:5000/material/assign-material", payload);
@@ -195,7 +204,7 @@
 //         iconColor: "#10b981",
 //       });
 
-//       setRows([{ item_id: "", uom_id: "", quantity: "" }]);
+//       setRows([{ item_id: "", uom_id: "", quantity: "", comp_ratio_a: "", comp_ratio_b: "", comp_ratio_c: "" }]);
 //       setSelectedProject("");
 //       setSelectedSite("");
 //       setSites([]);
@@ -301,6 +310,15 @@
 //                       Quantity
 //                     </th>
 //                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+//                       Comp Ratio A
+//                     </th>
+//                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+//                       Comp Ratio B
+//                     </th>
+//                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+//                       Comp Ratio C
+//                     </th>
+//                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 //                       Action
 //                     </th>
 //                   </tr>
@@ -358,6 +376,39 @@
 //                           required
 //                           disabled={!isFormEnabled}
 //                           min="1"
+//                         />
+//                       </td>
+//                       <td className="px-4 py-3 whitespace-nowrap">
+//                         <input
+//                           type="number"
+//                           name="comp_ratio_a"
+//                           value={row.comp_ratio_a}
+//                           onChange={(e) => handleInputChange(index, e)}
+//                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-50"
+//                           disabled={!isFormEnabled}
+//                           min="0"
+//                         />
+//                       </td>
+//                       <td className="px-4 py-3 whitespace-nowrap">
+//                         <input
+//                           type="number"
+//                           name="comp_ratio_b"
+//                           value={row.comp_ratio_b}
+//                           onChange={(e) => handleInputChange(index, e)}
+//                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-50"
+//                           disabled={!isFormEnabled}
+//                           min="0"
+//                         />
+//                       </td>
+//                       <td className="px-4 py-3 whitespace-nowrap">
+//                         <input
+//                           type="number"
+//                           name="comp_ratio_c"
+//                           value={row.comp_ratio_c}
+//                           onChange={(e) => handleInputChange(index, e)}
+//                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-50"
+//                           disabled={!isFormEnabled}
+//                           min="0"
 //                         />
 //                       </td>
 //                       <td className="px-4 py-3 whitespace-nowrap">
@@ -447,21 +498,23 @@
 
 
 
-
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
-import { PlusCircle, OctagonMinus, Loader2, CheckCircle } from "lucide-react";
+import { PlusCircle, OctagonMinus, Loader2, CheckCircle, ChevronDown, ChevronUp } from "lucide-react";
 
 const AssignMaterial = () => {
   const [projects, setProjects] = useState([]);
   const [sites, setSites] = useState([]);
   const [materials, setMaterials] = useState([]);
   const [uoms, setUoms] = useState([]);
+  const [workDescriptions, setWorkDescriptions] = useState([]);
   const [selectedProject, setSelectedProject] = useState("");
   const [selectedSite, setSelectedSite] = useState("");
   const [rows, setRows] = useState([
     {
+      desc_id: "",
+      isOpen: false, // For accordion toggle
       item_id: "",
       uom_id: "",
       quantity: "",
@@ -475,6 +528,7 @@ const AssignMaterial = () => {
     sites: false,
     materials: false,
     uoms: false,
+    workDescriptions: false,
     submitting: false,
   });
   const [error, setError] = useState(null);
@@ -536,6 +590,21 @@ const AssignMaterial = () => {
     }
   };
 
+  // Fetch work descriptions for selected site
+  const fetchWorkDescriptions = async (site_id) => {
+    try {
+      setLoading((prev) => ({ ...prev, workDescriptions: true }));
+      const response = await axios.get(`http://localhost:5000/material/work-descriptions?site_id=${site_id}`);
+      setWorkDescriptions(response.data.data || []);
+    } catch (error) {
+      console.error("Error fetching work descriptions:", error);
+      setError("Failed to load work descriptions. Please try again.");
+      setWorkDescriptions([]);
+    } finally {
+      setLoading((prev) => ({ ...prev, workDescriptions: false }));
+    }
+  };
+
   useEffect(() => {
     fetchProjects();
     fetchMaterials();
@@ -547,7 +616,8 @@ const AssignMaterial = () => {
     const pd_id = e.target.value;
     setSelectedProject(pd_id);
     setSelectedSite("");
-    setRows([{ item_id: "", uom_id: "", quantity: "", comp_ratio_a: "", comp_ratio_b: "", comp_ratio_c: "" }]);
+    setRows([{ desc_id: "", isOpen: false, item_id: "", uom_id: "", quantity: "", comp_ratio_a: "", comp_ratio_b: "", comp_ratio_c: "" }]);
+    setWorkDescriptions([]);
     setError(null);
     if (pd_id) {
       await fetchSites(pd_id);
@@ -557,10 +627,16 @@ const AssignMaterial = () => {
   };
 
   // Handle site selection
-  const handleSiteChange = (e) => {
-    setSelectedSite(e.target.value);
-    setRows([{ item_id: "", uom_id: "", quantity: "", comp_ratio_a: "", comp_ratio_b: "", comp_ratio_c: "" }]);
+  const handleSiteChange = async (e) => {
+    const site_id = e.target.value;
+    setSelectedSite(site_id);
+    setRows([{ desc_id: "", isOpen: false, item_id: "", uom_id: "", quantity: "", comp_ratio_a: "", comp_ratio_b: "", comp_ratio_c: "" }]);
     setError(null);
+    if (site_id) {
+      await fetchWorkDescriptions(site_id);
+    } else {
+      setWorkDescriptions([]);
+    }
   };
 
   // Handle input changes for table rows
@@ -572,11 +648,20 @@ const AssignMaterial = () => {
     setError(null);
   };
 
+  // Toggle accordion for a row
+  const toggleAccordion = (index) => {
+    const updatedRows = [...rows];
+    updatedRows[index].isOpen = !updatedRows[index].isOpen;
+    setRows(updatedRows);
+  };
+
   // Add new row
   const handleAddRow = () => {
     setRows([
       ...rows,
       {
+        desc_id: "",
+        isOpen: false,
         item_id: "",
         uom_id: "",
         quantity: "",
@@ -616,6 +701,7 @@ const AssignMaterial = () => {
 
       const validationErrors = [];
       rows.forEach((row, index) => {
+        if (!row.desc_id) validationErrors.push(`Row ${index + 1}: Work Description is required`);
         if (!row.item_id) validationErrors.push(`Row ${index + 1}: Material is required`);
         if (!row.uom_id) validationErrors.push(`Row ${index + 1}: Unit of Measure is required`);
         if (!row.quantity) {
@@ -636,6 +722,7 @@ const AssignMaterial = () => {
         item_id: row.item_id,
         uom_id: parseInt(row.uom_id),
         quantity: parseInt(row.quantity),
+        desc_id: row.desc_id,
         comp_ratio_a: row.comp_ratio_a ? parseInt(row.comp_ratio_a) : null,
         comp_ratio_b: row.comp_ratio_b ? parseInt(row.comp_ratio_b) : null,
         comp_ratio_c: row.comp_ratio_c ? parseInt(row.comp_ratio_c) : null,
@@ -654,10 +741,11 @@ const AssignMaterial = () => {
         iconColor: "#10b981",
       });
 
-      setRows([{ item_id: "", uom_id: "", quantity: "", comp_ratio_a: "", comp_ratio_b: "", comp_ratio_c: "" }]);
+      setRows([{ desc_id: "", isOpen: false, item_id: "", uom_id: "", quantity: "", comp_ratio_a: "", comp_ratio_b: "", comp_ratio_c: "" }]);
       setSelectedProject("");
       setSelectedSite("");
       setSites([]);
+      setWorkDescriptions([]);
     } catch (error) {
       console.error("Error submitting material assignments:", error);
       setError(error.response?.data?.message || "Failed to assign materials. Please try again.");
@@ -677,11 +765,11 @@ const AssignMaterial = () => {
             Material Planning
           </h2>
           <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-            Manage and assign materials to your project sites with ease
+            Assign materials to work items for your project sites
           </p>
         </div>
 
-        {loading.projects || loading.materials || loading.uoms ? (
+        {loading.projects || loading.materials || loading.uoms || loading.workDescriptions ? (
           <div className="flex justify-center items-center py-16">
             <div className="flex flex-col items-center space-y-3">
               <Loader2 className="h-10 w-10 text-blue-600 animate-spin" />
@@ -718,7 +806,7 @@ const AssignMaterial = () => {
                   </select>
                 </div>
               </div>
-              
+
               <div className="space-y-1">
                 <label className="block text-sm font-medium text-gray-700">Select Site</label>
                 <div className="relative">
@@ -751,6 +839,9 @@ const AssignMaterial = () => {
                       #
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Work Description
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Material
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -775,108 +866,142 @@ const AssignMaterial = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {rows.map((row, index) => (
-                    <tr
-                      key={`row-${index}`}
-                      className="hover:bg-blue-50 transition-colors duration-150"
-                    >
-                      <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {index + 1}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <select
-                          name="item_id"
-                          value={row.item_id}
-                          onChange={(e) => handleInputChange(index, e)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-50"
-                          required
-                          disabled={!isFormEnabled}
-                        >
-                          <option value="">Select Material</option>
-                          {materials.map((material) => (
-                            <option key={material.item_id} value={material.item_id}>
-                              {material.item_name}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <select
-                          name="uom_id"
-                          value={row.uom_id}
-                          onChange={(e) => handleInputChange(index, e)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-50"
-                          required
-                          disabled={!isFormEnabled}
-                        >
-                          <option value="">Select UOM</option>
-                          {uoms.map((uom) => (
-                            <option key={uom.uom_id} value={uom.uom_id}>
-                              {uom.uom_name}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <input
-                          type="number"
-                          name="quantity"
-                          value={row.quantity}
-                          onChange={(e) => handleInputChange(index, e)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-50"
-                          required
-                          disabled={!isFormEnabled}
-                          min="1"
-                        />
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <input
-                          type="number"
-                          name="comp_ratio_a"
-                          value={row.comp_ratio_a}
-                          onChange={(e) => handleInputChange(index, e)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-50"
-                          disabled={!isFormEnabled}
-                          min="0"
-                        />
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <input
-                          type="number"
-                          name="comp_ratio_b"
-                          value={row.comp_ratio_b}
-                          onChange={(e) => handleInputChange(index, e)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-50"
-                          disabled={!isFormEnabled}
-                          min="0"
-                        />
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <input
-                          type="number"
-                          name="comp_ratio_c"
-                          value={row.comp_ratio_c}
-                          onChange={(e) => handleInputChange(index, e)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-50"
-                          disabled={!isFormEnabled}
-                          min="0"
-                        />
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveRow(index)}
-                          disabled={rows.length <= 1 || !isFormEnabled}
-                          className={`p-1.5 rounded-md transition ${
-                            rows.length <= 1 || !isFormEnabled
-                              ? "text-gray-400 cursor-not-allowed"
-                              : "text-red-600 hover:bg-red-50"
-                          }`}
-                          title={rows.length <= 1 ? "At least one row is required" : "Remove this entry"}
-                        >
-                          <OctagonMinus className="h-4 w-4" />
-                        </button>
-                      </td>
-                    </tr>
+                    <React.Fragment key={`row-${index}`}>
+                      <tr className="hover:bg-blue-50 transition-colors duration-150">
+                        <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {index + 1}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <select
+                              name="desc_id"
+                              value={row.desc_id}
+                              onChange={(e) => handleInputChange(index, e)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-50"
+                              required
+                              disabled={!isFormEnabled || loading.workDescriptions}
+                              onClick={() => toggleAccordion(index)}
+                            >
+                              <option value="">Select Work Description</option>
+                              {workDescriptions.map((desc) => (
+                                <option key={desc.desc_id} value={desc.desc_id}>
+                                  {desc.desc_name}
+                                </option>
+                              ))}
+                            </select>
+                            <button
+                              type="button"
+                              onClick={() => toggleAccordion(index)}
+                              className="ml-2 p-1 text-gray-600 hover:text-blue-600"
+                            >
+                              {row.isOpen ? (
+                                <ChevronUp className="h-4 w-4" />
+                              ) : (
+                                <ChevronDown className="h-4 w-4" />
+                              )}
+                            </button>
+                          </div>
+                        </td>
+                        {row.isOpen && (
+                          <>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <select
+                                name="item_id"
+                                value={row.item_id}
+                                onChange={(e) => handleInputChange(index, e)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-50"
+                                required
+                                disabled={!isFormEnabled}
+                              >
+                                <option value="">Select Material</option>
+                                {materials.map((material) => (
+                                  <option key={material.item_id} value={material.item_id}>
+                                    {material.item_name}
+                                  </option>
+                                ))}
+                              </select>
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <select
+                                name="uom_id"
+                                value={row.uom_id}
+                                onChange={(e) => handleInputChange(index, e)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-50"
+                                required
+                                disabled={!isFormEnabled}
+                              >
+                                <option value="">Select UOM</option>
+                                {uoms.map((uom) => (
+                                  <option key={uom.uom_id} value={uom.uom_id}>
+                                    {uom.uom_name}
+                                  </option>
+                                ))}
+                              </select>
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <input
+                                type="number"
+                                name="quantity"
+                                value={row.quantity}
+                                onChange={(e) => handleInputChange(index, e)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-50"
+                                required
+                                disabled={!isFormEnabled}
+                                min="1"
+                              />
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <input
+                                type="number"
+                                name="comp_ratio_a"
+                                value={row.comp_ratio_a}
+                                onChange={(e) => handleInputChange(index, e)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-50"
+                                disabled={!isFormEnabled}
+                                min="0"
+                              />
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <input
+                                type="number"
+                                name="comp_ratio_b"
+                                value={row.comp_ratio_b}
+                                onChange={(e) => handleInputChange(index, e)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-50"
+                                disabled={!isFormEnabled}
+                                min="0"
+                              />
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <input
+                                type="number"
+                                name="comp_ratio_c"
+                                value={row.comp_ratio_c}
+                                onChange={(e) => handleInputChange(index, e)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm disabled:bg-gray-50"
+                                disabled={!isFormEnabled}
+                                min="0"
+                              />
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveRow(index)}
+                                disabled={rows.length <= 1 || !isFormEnabled}
+                                className={`p-1.5 rounded-md transition ${
+                                  rows.length <= 1 || !isFormEnabled
+                                    ? "text-gray-400 cursor-not-allowed"
+                                    : "text-red-600 hover:bg-red-50"
+                                }`}
+                                title={rows.length <= 1 ? "At least one row is required" : "Remove this entry"}
+                              >
+                                <OctagonMinus className="h-4 w-4" />
+                              </button>
+                            </td>
+                          </>
+                        )}
+                      </tr>
+                    </React.Fragment>
                   ))}
                 </tbody>
               </table>
@@ -918,6 +1043,3 @@ const AssignMaterial = () => {
 };
 
 export default AssignMaterial;
-
-
-
