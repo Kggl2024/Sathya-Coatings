@@ -26,6 +26,10 @@
 
     router.post("/assign-material", materialController.assignMaterial);
     router.get("/work-descriptions", materialController.fetchWorkDescriptions);
+
+    router.get('/next-dc-no', materialController.getNextDcNo);
+
+
     router.post("/add-dispatch", materialController.addMaterialDispatch);
     router.get("/assignments-with-dispatch", materialController.fetchMaterialAssignmentsWithDispatch);
     router.get("/dispatch-details", materialController.fetchMaterialDispatchDetails);

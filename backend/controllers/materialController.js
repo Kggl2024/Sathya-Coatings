@@ -99,7 +99,15 @@ exports.fetchMaterialMaster = async (req, res) => {
 
 exports.fetchProjects = async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT pd_id, project_name FROM project_details');
+    const [rows] = await db.query(`
+      SELECT 
+        pd.pd_id,
+        pd.project_name,
+        c.company_name,
+        c.vendor_code
+      FROM project_details pd
+      LEFT JOIN company c ON pd.company_id = c.company_id
+    `);
     res.status(200).json({
       status: 'success',
       message: 'Projects fetched successfully',
@@ -113,7 +121,6 @@ exports.fetchProjects = async (req, res) => {
     });
   }
 };
-
 exports.fetchSites = async (req, res) => {
   try {
     const { pd_id } = req.params;
@@ -1054,6 +1061,28 @@ exports.fetchWorkDescriptions = async (req, res) => {
       status: 'error',
       message: 'Failed to fetch work descriptions',
       error: error.message,
+    });
+  }
+};
+
+
+exports.getNextDcNo = async function (req, res) {
+  try {
+    const [rows] = await db.query('SELECT MAX(dc_no) AS max_dc_no FROM material_dispatch');
+    const maxDcNo = rows[0].max_dc_no || 0;
+    const nextDcNo = maxDcNo + 1;
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Next DC No fetched successfully',
+      data: { next_dc_no: nextDcNo }
+    });
+  } catch (error) {
+    console.error('Error fetching next DC No:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch next DC No',
+      error: error.message
     });
   }
 };

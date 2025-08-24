@@ -144,6 +144,7 @@
 //   const [selectedProject, setSelectedProject] = useState("");
 //   const [selectedSite, setSelectedSite] = useState("");
 //   const [assignedMaterials, setAssignedMaterials] = useState([]);
+//   const [groupedMaterials, setGroupedMaterials] = useState({});
 //   const [loading, setLoading] = useState({
 //     projects: false,
 //     sites: false,
@@ -211,6 +212,18 @@
 //       setSites(response.data.data || []);
 //       if (response.data.data.length > 0 && !selectedSite) {
 //         setSelectedSite(response.data.data[0].site_id);
+//         setDispatchData((prev) => ({
+//           ...prev,
+//           order_no: response.data.data[0].po_number || "",
+//         }));
+//       }
+//       // Set vendor_code based on selected project
+//       const selectedProjectData = projects.find((project) => project.pd_id === pd_id);
+//       if (selectedProjectData) {
+//         setDispatchData((prev) => ({
+//           ...prev,
+//           vendor_code: selectedProjectData.vendor_code || "",
+//         }));
 //       }
 //     } catch (error) {
 //       console.error("Error fetching sites:", error);
@@ -291,6 +304,18 @@
 //       const materials = response.data.data || [];
 //       setAssignedMaterials(materials);
 
+//       // Group materials by desc_id
+//       const grouped = materials.reduce((acc, item) => {
+//         const key = item.desc_id || "unknown";
+//         if (!acc[key]) {
+//           acc[key] = { desc_name: item.desc_name || "Unknown Description", items: [] };
+//         }
+//         acc[key].items.push(item);
+//         return acc;
+//       }, {});
+//       setGroupedMaterials(grouped);
+
+//       // Initialize quantities and remarks
 //       const newQuantities = {};
 //       const newRemarks = {};
 //       materials.forEach((assignment) => {
@@ -339,6 +364,7 @@
 //     setSelectedSite("");
 //     setSites([]);
 //     setAssignedMaterials([]);
+//     setGroupedMaterials({});
 //     setCalculatedQuantities({});
 //     setRemarks({});
 //     setDispatchData({ dc_no: "", dispatch_date: "", order_no: "", vendor_code: "" });
@@ -371,9 +397,14 @@
 //     const site_id = e.target.value;
 //     setSelectedSite(site_id);
 //     setAssignedMaterials([]);
+//     setGroupedMaterials({});
 //     setCalculatedQuantities({});
 //     setRemarks({});
-//     setDispatchData({ dc_no: "", dispatch_date: "", order_no: "", vendor_code: "" });
+//     const selectedSiteData = sites.find((site) => site.site_id === site_id);
+//     setDispatchData((prev) => ({
+//       ...prev,
+//       order_no: selectedSiteData ? selectedSiteData.po_number || "" : "",
+//     }));
 //     setTransportData({
 //       transport_type_id: "",
 //       provider_id: "",
@@ -444,26 +475,26 @@
 
 //   // Handle new entry for searchable dropdowns
 //   const handleNewEntryDropdown = (field, value) => {
-//   if (field === "vehicle_id") {
-//     setNewEntryData((prev) => ({
-//       ...prev,
-//       vehicle_model: value, // Set vehicle_model to the dropdown input
-//       vehicle_number: "", // Keep vehicle_number empty for user input
-//     }));
-//   } else if (field === "driver_id") {
-//     setNewEntryData((prev) => ({
-//       ...prev,
-//       driver_mobile: "",
-//       driver_address: "",
-//     }));
-//   } else if (field === "provider_id") {
-//     setNewEntryData((prev) => ({
-//       ...prev,
-//       provider_address: "",
-//       provider_mobile: "",
-//     }));
-//   }
-// };
+//     if (field === "vehicle_id") {
+//       setNewEntryData((prev) => ({
+//         ...prev,
+//         vehicle_model: value,
+//         vehicle_number: "",
+//       }));
+//     } else if (field === "driver_id") {
+//       setNewEntryData((prev) => ({
+//         ...prev,
+//         driver_mobile: "",
+//         driver_address: "",
+//       }));
+//     } else if (field === "provider_id") {
+//       setNewEntryData((prev) => ({
+//         ...prev,
+//         provider_address: "",
+//         provider_mobile: "",
+//       }));
+//     }
+//   };
 
 //   // Handle quantity input changes
 //   const handleQuantityChange = (assignmentId, field, value) => {
@@ -487,8 +518,8 @@
 //     }));
 //   };
 
-//   // Validate dispatch and remarks for enabling Assign Transport button
-//   const isAssignTransportEnabled = () => {
+//   // Validate dispatch and remarks for enabling Dispatch button
+//   const isDispatchEnabled = () => {
 //     if (!dispatchData.dc_no || !dispatchData.dispatch_date || !dispatchData.order_no || !dispatchData.vendor_code) {
 //       return false;
 //     }
@@ -540,6 +571,24 @@
 //         return;
 //       }
 
+//       // Prepare dispatch payload
+//       const dispatchPayload = assignedMaterials
+//         .filter((assignment) => assignment.dispatch_status === "not-dispatched")
+//         .map((assignment) => ({
+//           material_assign_id: assignment.id,
+//           desc_id: assignment.desc_id,
+//           dc_no: parseInt(dispatchData.dc_no),
+//           dispatch_date: dispatchData.dispatch_date,
+//           order_no: dispatchData.order_no,
+//           vendor_code: dispatchData.vendor_code,
+//           comp_a_qty: calculatedQuantities[assignment.id]?.comp_a_qty || null,
+//           comp_b_qty: calculatedQuantities[assignment.id]?.comp_b_qty || null,
+//           comp_c_qty: calculatedQuantities[assignment.id]?.comp_c_qty || null,
+//           comp_a_remarks: calculatedQuantities[assignment.id]?.comp_a_qty !== null ? remarks[assignment.id]?.comp_a_remarks || null : null,
+//           comp_b_remarks: calculatedQuantities[assignment.id]?.comp_b_qty !== null ? remarks[assignment.id]?.comp_b_remarks || null : null,
+//           comp_c_remarks: calculatedQuantities[assignment.id]?.comp_c_qty !== null ? remarks[assignment.id]?.comp_c_remarks || null : null,
+//         }));
+
 //       // Prepare transport payload
 //       const transportPayload = {
 //         transport_type_id: parseInt(transportData.transport_type_id),
@@ -556,21 +605,6 @@
 //         driver_mobile: newEntryData.driver_mobile || null,
 //         driver_address: newEntryData.driver_address || null,
 //       };
-
-//       // Prepare dispatch payload
-//       const dispatchPayload = assignedMaterials.map((assignment) => ({
-//         material_assign_id: assignment.id,
-//         dc_no: parseInt(dispatchData.dc_no),
-//         dispatch_date: dispatchData.dispatch_date,
-//         order_no: dispatchData.order_no,
-//         vendor_code: dispatchData.vendor_code,
-//         comp_a_qty: calculatedQuantities[assignment.id]?.comp_a_qty || null,
-//         comp_b_qty: calculatedQuantities[assignment.id]?.comp_b_qty || null,
-//         comp_c_qty: calculatedQuantities[assignment.id]?.comp_c_qty || null,
-//         comp_a_remarks: calculatedQuantities[assignment.id]?.comp_a_qty !== null ? remarks[assignment.id]?.comp_a_remarks || null : null,
-//         comp_b_remarks: calculatedQuantities[assignment.id]?.comp_b_qty !== null ? remarks[assignment.id]?.comp_b_remarks || null : null,
-//         comp_c_remarks: calculatedQuantities[assignment.id]?.comp_c_qty !== null ? remarks[assignment.id]?.comp_c_remarks || null : null,
-//       }));
 
 //       // Combine payloads
 //       const payload = {
@@ -629,6 +663,8 @@
 //         provider_address: "",
 //         provider_mobile: "",
 //       });
+//       setCalculatedQuantities({});
+//       setRemarks({});
 //       setIsTransportModalOpen(false);
 //       await fetchAssignedMaterials();
 //       await fetchTransportTypes();
@@ -800,29 +836,17 @@
 //                 <label className="block text-xs font-medium text-gray-600" htmlFor="order_no">
 //                   Order No <span className="text-red-500">*</span>
 //                 </label>
-//                 <input
-//                   type="text"
-//                   id="order_no"
-//                   placeholder="Enter Order No"
-//                   value={dispatchData.order_no}
-//                   onChange={(e) => handleDispatchChange("order_no", e.target.value)}
-//                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm transition-all duration-200"
-//                   aria-required="true"
-//                 />
+//                 <div className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-100 text-gray-700">
+//                   {dispatchData.order_no || "N/A"}
+//                 </div>
 //               </div>
 //               <div className="w-full sm:w-1/4">
 //                 <label className="block text-xs font-medium text-gray-600" htmlFor="vendor_code">
 //                   Vendor Code <span className="text-red-500">*</span>
 //                 </label>
-//                 <input
-//                   type="text"
-//                   id="vendor_code"
-//                   placeholder="Enter Vendor Code"
-//                   value={dispatchData.vendor_code}
-//                   onChange={(e) => handleDispatchChange("vendor_code", e.target.value)}
-//                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm transition-all duration-200"
-//                   aria-required="true"
-//                 />
+//                 <div className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-100 text-gray-700">
+//                   {dispatchData.vendor_code || "N/A"}
+//                 </div>
 //               </div>
 //             </div>
 //           </div>
@@ -858,7 +882,7 @@
 //             <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" aria-hidden="true" />
 //             <p className="text-gray-600 text-lg font-medium">Please select a project and site.</p>
 //           </div>
-//         ) : assignedMaterials.length === 0 ? (
+//         ) : Object.keys(groupedMaterials).length === 0 ? (
 //           <div className="text-center py-16 bg-white rounded-xl shadow-lg border border-gray-200">
 //             <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" aria-hidden="true" />
 //             <p className="text-gray-600 text-lg font-medium">No non-dispatched material assignments found for this project and site.</p>
@@ -866,141 +890,153 @@
 //           </div>
 //         ) : (
 //           <>
-//             {/* Desktop Table View */}
+//             {/* Desktop View with Accordions */}
 //             <div className="hidden md:block bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden mb-6">
-//               <div className="overflow-x-auto">
-//                 <table className="min-w-full divide-y divide-gray-200">
-//                   <thead className="bg-gradient-to-r from-teal-600 to-teal-700 text-white">
-//                     <tr>
-//                       <th className="px-6 py-4 text-left text-sm font-semibold tracking-wider">#</th>
-//                       <th className="px-6 py-4 text-left text-sm font-semibold tracking-wider">Material Details</th>
-//                       <th className="px-6 py-4 text-left text-sm font-semibold tracking-wider">Quantity & UOM</th>
-//                       <th className="px-6 py-4 text-left text-sm font-semibold tracking-wider">Component Quantities</th>
-//                       <th className="px-6 py-4 text-left text-sm font-semibold tracking-wider">Remarks</th>
-//                     </tr>
-//                   </thead>
-//                   <tbody className="bg-white divide-y divide-gray-200">
-//                     {assignedMaterials.map((assignment, index) => (
-//                       <tr key={assignment.id} className="hover:bg-teal-50 transition-colors duration-200">
-//                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{index + 1}</td>
-//                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-//                           <div className="space-y-1">
-//                             <p className="font-medium">{assignment.item_name || "N/A"} {getRatioString(assignment)}</p>
-//                           </div>
-//                         </td>
-//                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-//                           <div className="space-y-1">
-//                             <span className="inline-flex items-center px-2.5 py-0.5 text-md font-bold">
-//                               {assignment.quantity || "N/A"} | {assignment.uom_name || "N/A"}
-//                             </span>
-//                           </div>
-//                         </td>
-//                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-//                           <div className="space-y-3">
-//                             {assignment.comp_ratio_a !== null && (
-//                               <div className="grid grid-cols-12 gap-2 items-center">
-//                                 <label className="col-span-3 text-sm font-medium text-gray-700 mr-1.5">Comp A:</label>
-//                                 <div className="col-span-9">
-//                                   <input
-//                                     type="number"
-//                                     value={calculatedQuantities[assignment.id]?.comp_a_qty ?? ""}
-//                                     onChange={(e) => handleQuantityChange(assignment.id, "comp_a_qty", e.target.value)}
-//                                     className="w-full px-2 py-1 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 shadow-sm"
-//                                     placeholder="Qty"
-//                                   />
+//               {Object.entries(groupedMaterials).map(([desc_id, group]) => (
+//                 <details key={desc_id} open className="mb-4 border-b border-gray-200">
+//                   <summary className="px-6 py-4 bg-gray-50 text-sm font-medium text-gray-700 cursor-pointer flex justify-between items-center">
+//                     <span>Work Description: {group.desc_name}</span>
+//                   </summary>
+//                   <div className="p-4 overflow-x-auto">
+//                     <table className="min-w-full divide-y divide-gray-200">
+//                       <thead className="bg-gradient-to-r from-teal-600 to-teal-700 text-white">
+//                         <tr>
+//                           <th className="px-6 py-4 text-left text-sm font-semibold tracking-wider">#</th>
+//                           <th className="px-6 py-4 text-left text-sm font-semibold tracking-wider">Material Details</th>
+//                           <th className="px-6 py-4 text-left text-sm font-semibold tracking-wider">Quantity & UOM</th>
+//                           <th className="px-6 py-4 text-left text-sm font-semibold tracking-wider">Component Quantities</th>
+//                           <th className="px-6 py-4 text-left text-sm font-semibold tracking-wider">Remarks</th>
+//                         </tr>
+//                       </thead>
+//                       <tbody className="bg-white divide-y divide-gray-200">
+//                         {group.items
+//                           .filter((assignment) => assignment.dispatch_status === "not-dispatched")
+//                           .map((assignment, index) => (
+//                             <tr key={assignment.id} className="hover:bg-teal-50 transition-colors duration-200">
+//                               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{index + 1}</td>
+//                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+//                                 <div className="space-y-1">
+//                                   <p className="font-medium">{assignment.item_name || "N/A"} {getRatioString(assignment)}</p>
 //                                 </div>
-//                               </div>
-//                             )}
-//                             {assignment.comp_ratio_b !== null && (
-//                               <div className="grid grid-cols-12 gap-2 items-center">
-//                                 <label className="col-span-3 text-sm font-medium text-gray-700 mr-1.5">Comp B:</label>
-//                                 <div className="col-span-9">
-//                                   <input
-//                                     type="number"
-//                                     value={calculatedQuantities[assignment.id]?.comp_b_qty ?? ""}
-//                                     onChange={(e) => handleQuantityChange(assignment.id, "comp_b_qty", e.target.value)}
-//                                     className="w-full px-2 py-1 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 shadow-sm"
-//                                     placeholder="Qty"
-//                                   />
+//                               </td>
+//                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+//                                 <div className="space-y-1">
+//                                   <span className="inline-flex items-center px-2.5 py-0.5 text-md font-bold">
+//                                     {assignment.quantity || "N/A"} | {assignment.uom_name || "N/A"}
+//                                   </span>
 //                                 </div>
-//                               </div>
-//                             )}
-//                             {assignment.comp_ratio_c !== null && (
-//                               <div className="grid grid-cols-12 gap-2 items-center">
-//                                 <label className="col-span-3 text-sm font-medium text-gray-700 mr-1.5">Comp C:</label>
-//                                 <div className="col-span-9">
-//                                   <input
-//                                     type="number"
-//                                     value={calculatedQuantities[assignment.id]?.comp_c_qty ?? ""}
-//                                     onChange={(e) => handleQuantityChange(assignment.id, "comp_c_qty", e.target.value)}
-//                                     className="w-full px-2 py-1 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 shadow-sm"
-//                                     placeholder="Qty"
-//                                   />
+//                               </td>
+//                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+//                                 <div className="space-y-3">
+//                                   {assignment.comp_ratio_a !== null && (
+//                                     <div className="grid grid-cols-12 gap-2 items-center">
+//                                       <label className="col-span-3 text-sm font-medium text-gray-700 mr-1.5">Comp A:</label>
+//                                       <div className="col-span-9">
+//                                         <input
+//                                           type="number"
+//                                           value={calculatedQuantities[assignment.id]?.comp_a_qty ?? ""}
+//                                           onChange={(e) => handleQuantityChange(assignment.id, "comp_a_qty", e.target.value)}
+//                                           className="w-full px-2 py-1 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 shadow-sm"
+//                                           placeholder="Qty"
+//                                           min="0"
+//                                         />
+//                                       </div>
+//                                     </div>
+//                                   )}
+//                                   {assignment.comp_ratio_b !== null && (
+//                                     <div className="grid grid-cols-12 gap-2 items-center">
+//                                       <label className="col-span-3 text-sm font-medium text-gray-700 mr-1.5">Comp B:</label>
+//                                       <div className="col-span-9">
+//                                         <input
+//                                           type="number"
+//                                           value={calculatedQuantities[assignment.id]?.comp_b_qty ?? ""}
+//                                           onChange={(e) => handleQuantityChange(assignment.id, "comp_b_qty", e.target.value)}
+//                                           className="w-full px-2 py-1 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 shadow-sm"
+//                                           placeholder="Qty"
+//                                           min="0"
+//                                         />
+//                                       </div>
+//                                     </div>
+//                                   )}
+//                                   {assignment.comp_ratio_c !== null && (
+//                                     <div className="grid grid-cols-12 gap-2 items-center">
+//                                       <label className="col-span-3 text-sm font-medium text-gray-700 mr-1.5">Comp C:</label>
+//                                       <div className="col-span-9">
+//                                         <input
+//                                           type="number"
+//                                           value={calculatedQuantities[assignment.id]?.comp_c_qty ?? ""}
+//                                           onChange={(e) => handleQuantityChange(assignment.id, "comp_c_qty", e.target.value)}
+//                                           className="w-full px-2 py-1 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 shadow-sm"
+//                                           placeholder="Qty"
+//                                           min="0"
+//                                         />
+//                                       </div>
+//                                     </div>
+//                                   )}
 //                                 </div>
-//                               </div>
-//                             )}
-//                           </div>
-//                         </td>
-//                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-//                           <div className="space-y-3">
-//                             {assignment.comp_ratio_a !== null && (
-//                               <div className="grid grid-cols-12 gap-2 items-center">
-//                                 <div className="col-span-9">
-//                                   <input
-//                                     type="text"
-//                                     value={remarks[assignment.id]?.comp_a_remarks ?? ""}
-//                                     onChange={(e) => handleRemarksChange(assignment.id, "comp_a_remarks", e.target.value)}
-//                                     className="w-full px-2 py-1 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 shadow-sm"
-//                                     placeholder="Remarks for Component A"
-//                                     required={calculatedQuantities[assignment.id]?.comp_a_qty !== null}
-//                                   />
+//                               </td>
+//                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+//                                 <div className="space-y-3">
+//                                   {assignment.comp_ratio_a !== null && (
+//                                     <div className="grid grid-cols-12 gap-2 items-center">
+//                                       <div className="col-span-9">
+//                                         <input
+//                                           type="text"
+//                                           value={remarks[assignment.id]?.comp_a_remarks ?? ""}
+//                                           onChange={(e) => handleRemarksChange(assignment.id, "comp_a_remarks", e.target.value)}
+//                                           className="w-full px-2 py-1 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 shadow-sm"
+//                                           placeholder="Remarks for Component A"
+//                                           required={calculatedQuantities[assignment.id]?.comp_a_qty !== null}
+//                                         />
+//                                       </div>
+//                                     </div>
+//                                   )}
+//                                   {assignment.comp_ratio_b !== null && (
+//                                     <div className="grid grid-cols-12 gap-2 items-center">
+//                                       <div className="col-span-9">
+//                                         <input
+//                                           type="text"
+//                                           value={remarks[assignment.id]?.comp_b_remarks ?? ""}
+//                                           onChange={(e) => handleRemarksChange(assignment.id, "comp_b_remarks", e.target.value)}
+//                                           className="w-full px-2 py-1 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 shadow-sm"
+//                                           placeholder="Remarks for Component B"
+//                                           required={calculatedQuantities[assignment.id]?.comp_b_qty !== null}
+//                                         />
+//                                       </div>
+//                                     </div>
+//                                   )}
+//                                   {assignment.comp_ratio_c !== null && (
+//                                     <div className="grid grid-cols-12 gap-2 items-center">
+//                                       <div className="col-span-9">
+//                                         <input
+//                                           type="text"
+//                                           value={remarks[assignment.id]?.comp_c_remarks ?? ""}
+//                                           onChange={(e) => handleRemarksChange(assignment.id, "comp_c_remarks", e.target.value)}
+//                                           className="w-full px-2 py-1 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 shadow-sm"
+//                                           placeholder="Remarks for Component C"
+//                                           required={calculatedQuantities[assignment.id]?.comp_c_qty !== null}
+//                                         />
+//                                       </div>
+//                                     </div>
+//                                   )}
 //                                 </div>
-//                               </div>
-//                             )}
-//                             {assignment.comp_ratio_b !== null && (
-//                               <div className="grid grid-cols-12 gap-2 items-center">
-//                                 <div className="col-span-9">
-//                                   <input
-//                                     type="text"
-//                                     value={remarks[assignment.id]?.comp_b_remarks ?? ""}
-//                                     onChange={(e) => handleRemarksChange(assignment.id, "comp_b_remarks", e.target.value)}
-//                                     className="w-full px-2 py-1 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 shadow-sm"
-//                                     placeholder="Remarks for Component B"
-//                                     required={calculatedQuantities[assignment.id]?.comp_b_qty !== null}
-//                                   />
-//                                 </div>
-//                               </div>
-//                             )}
-//                             {assignment.comp_ratio_c !== null && (
-//                               <div className="grid grid-cols-12 gap-2 items-center">
-//                                 <div className="col-span-9">
-//                                   <input
-//                                     type="text"
-//                                     value={remarks[assignment.id]?.comp_c_remarks ?? ""}
-//                                     onChange={(e) => handleRemarksChange(assignment.id, "comp_c_remarks", e.target.value)}
-//                                     className="w-full px-2 py-1 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 shadow-sm"
-//                                     placeholder="Remarks for Component C"
-//                                     required={calculatedQuantities[assignment.id]?.comp_c_qty !== null}
-//                                   />
-//                                 </div>
-//                               </div>
-//                             )}
-//                           </div>
-//                         </td>
-//                       </tr>
-//                     ))}
-//                   </tbody>
-//                 </table>
-//               </div>
+//                               </td>
+//                             </tr>
+//                           ))}
+//                       </tbody>
+//                     </table>
+//                   </div>
+//                 </details>
+//               ))}
 //               <div className="p-4 flex justify-end">
 //                 <button
 //                   onClick={() => setIsTransportModalOpen(true)}
 //                   className={`px-4 py-2 text-white rounded-lg text-sm font-medium shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-teal-500 ${
-//                     isAssignTransportEnabled()
+//                     isDispatchEnabled() && assignedMaterials.some(a => a.dispatch_status === "not-dispatched")
 //                       ? "bg-teal-600 hover:bg-teal-700"
 //                       : "bg-gray-400 cursor-not-allowed"
 //                   }`}
-//                   disabled={!isAssignTransportEnabled()}
+//                   disabled={!isDispatchEnabled() || !assignedMaterials.some(a => a.dispatch_status === "not-dispatched")}
 //                 >
 //                   <Truck className="h-4 w-4 inline-block mr-2" />
 //                   Assign Transport
@@ -1010,122 +1046,134 @@
 
 //             {/* Mobile Card View */}
 //             <div className="md:hidden space-y-6 mb-6">
-//               {assignedMaterials.map((assignment, index) => (
-//                 <div key={assignment.id} className="bg-white rounded-xl shadow-lg p-5 border border-gray-100">
-//                   <div className="space-y-4">
-//                     <div className="flex justify-between items-center">
-//                       <span className="text-sm font-medium text-gray-900">#{index + 1}</span>
-//                     </div>
-//                     <div>
-//                       <p className="text-sm font-medium text-gray-700">Material Details</p>
-//                       <p className="text-sm text-gray-600">{assignment.item_name || "N/A"} {getRatioString(assignment)}</p>
-//                     </div>
-//                     <div>
-//                       <p className="text-sm font-medium text-gray-700">Quantity & UOM</p>
-//                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
-//                         {assignment.quantity || "N/A"} {assignment.uom_name || "N/A"}
-//                       </span>
-//                     </div>
-//                     <div>
-//                       <p className="text-sm font-medium text-gray-700">Component Quantities</p>
-//                       <div className="space-y-3">
-//                         {assignment.comp_ratio_a !== null && (
-//                           <div className="space-y-1">
-//                             <label className="text-xs font-medium text-gray-700">Component A</label>
-//                             <input
-//                               type="number"
-//                               value={calculatedQuantities[assignment.id]?.comp_a_qty ?? ""}
-//                               onChange={(e) => handleQuantityChange(assignment.id, "comp_a_qty", e.target.value)}
-//                               className="w-full px-2 py-1 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 shadow-sm"
-//                               placeholder="Qty"
-//                             />
+//               {Object.entries(groupedMaterials).map(([desc_id, group]) => (
+//                 <details key={desc_id} open className="bg-white rounded-xl shadow-lg border border-gray-100">
+//                   <summary className="px-5 py-4 bg-gray-50 text-sm font-medium text-gray-700 cursor-pointer flex justify-between items-center">
+//                     <span>Work Description: {group.desc_name}</span>
+//                   </summary>
+//                   <div className="p-5 space-y-6">
+//                     {group.items
+//                       .filter((assignment) => assignment.dispatch_status === "not-dispatched")
+//                       .map((assignment, index) => (
+//                         <div key={assignment.id} className="space-y-4">
+//                           <div className="flex justify-between items-center">
+//                             <span className="text-sm font-medium text-gray-900">#{index + 1}</span>
 //                           </div>
-//                         )}
-//                         {assignment.comp_ratio_b !== null && (
-//                           <div className="space-y-1">
-//                             <label className="text-xs font-medium text-gray-700">Component B</label>
-//                             <input
-//                               type="number"
-//                               value={calculatedQuantities[assignment.id]?.comp_b_qty ?? ""}
-//                               onChange={(e) => handleQuantityChange(assignment.id, "comp_b_qty", e.target.value)}
-//                               className="w-full px-2 py-1 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 shadow-sm"
-//                               placeholder="Qty"
-//                             />
+//                           <div>
+//                             <p className="text-sm font-medium text-gray-700">Material Details</p>
+//                             <p className="text-sm text-gray-600">{assignment.item_name || "N/A"} {getRatioString(assignment)}</p>
 //                           </div>
-//                         )}
-//                         {assignment.comp_ratio_c !== null && (
-//                           <div className="space-y-1">
-//                             <label className="text-xs font-medium text-gray-700">Component C</label>
-//                             <input
-//                               type="number"
-//                               value={calculatedQuantities[assignment.id]?.comp_c_qty ?? ""}
-//                               onChange={(e) => handleQuantityChange(assignment.id, "comp_c_qty", e.target.value)}
-//                               className="w-full px-2 py-1 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 shadow-sm"
-//                               placeholder="Qty"
-//                             />
+//                           <div>
+//                             <p className="text-sm font-medium text-gray-700">Quantity & UOM</p>
+//                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
+//                               {assignment.quantity || "N/A"} {assignment.uom_name || "N/A"}
+//                             </span>
 //                           </div>
-//                         )}
-//                       </div>
-//                     </div>
-//                     <div>
-//                       <p className="text-sm font-medium text-gray-700">Remarks</p>
-//                       <div className="space-y-3">
-//                         {assignment.comp_ratio_a !== null && (
-//                           <div className="space-y-1">
-//                             <label className="text-xs font-medium text-gray-700">Component A</label>
-//                             <input
-//                               type="text"
-//                               value={remarks[assignment.id]?.comp_a_remarks ?? ""}
-//                               onChange={(e) => handleRemarksChange(assignment.id, "comp_a_remarks", e.target.value)}
-//                               className="w-full px-2 py-1 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 shadow-sm"
-//                               placeholder="Remarks for Component A"
-//                               required={calculatedQuantities[assignment.id]?.comp_a_qty !== null}
-//                             />
+//                           <div>
+//                             <p className="text-sm font-medium text-gray-700">Component Quantities</p>
+//                             <div className="space-y-3">
+//                               {assignment.comp_ratio_a !== null && (
+//                                 <div className="space-y-1">
+//                                   <label className="text-xs font-medium text-gray-700">Component A</label>
+//                                   <input
+//                                     type="number"
+//                                     value={calculatedQuantities[assignment.id]?.comp_a_qty ?? ""}
+//                                     onChange={(e) => handleQuantityChange(assignment.id, "comp_a_qty", e.target.value)}
+//                                     className="w-full px-2 py-1 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 shadow-sm"
+//                                     placeholder="Qty"
+//                                     min="0"
+//                                   />
+//                                 </div>
+//                               )}
+//                               {assignment.comp_ratio_b !== null && (
+//                                 <div className="space-y-1">
+//                                   <label className="text-xs font-medium text-gray-700">Component B</label>
+//                                   <input
+//                                     type="number"
+//                                     value={calculatedQuantities[assignment.id]?.comp_b_qty ?? ""}
+//                                     onChange={(e) => handleQuantityChange(assignment.id, "comp_b_qty", e.target.value)}
+//                                     className="w-full px-2 py-1 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 shadow-sm"
+//                                     placeholder="Qty"
+//                                     min="0"
+//                                   />
+//                                 </div>
+//                               )}
+//                               {assignment.comp_ratio_c !== null && (
+//                                 <div className="space-y-1">
+//                                   <label className="text-xs font-medium text-gray-700">Component C</label>
+//                                   <input
+//                                     type="number"
+//                                     value={calculatedQuantities[assignment.id]?.comp_c_qty ?? ""}
+//                                     onChange={(e) => handleQuantityChange(assignment.id, "comp_c_qty", e.target.value)}
+//                                     className="w-full px-2 py-1 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 shadow-sm"
+//                                     placeholder="Qty"
+//                                     min="0"
+//                                   />
+//                                 </div>
+//                               )}
+//                             </div>
 //                           </div>
-//                         )}
-//                         {assignment.comp_ratio_b !== null && (
-//                           <div className="space-y-1">
-//                             <label className="text-xs font-medium text-gray-700">Component B</label>
-//                             <input
-//                               type="text"
-//                               value={remarks[assignment.id]?.comp_b_remarks ?? ""}
-//                               onChange={(e) => handleRemarksChange(assignment.id, "comp_b_remarks", e.target.value)}
-//                               className="w-full px-2 py-1 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 shadow-sm"
-//                               placeholder="Remarks for Component B"
-//                               required={calculatedQuantities[assignment.id]?.comp_b_qty !== null}
-//                             />
+//                           <div>
+//                             <p className="text-sm font-medium text-gray-700">Remarks</p>
+//                             <div className="space-y-3">
+//                               {assignment.comp_ratio_a !== null && (
+//                                 <div className="space-y-1">
+//                                   <label className="text-xs font-medium text-gray-700">Component A</label>
+//                                   <input
+//                                     type="text"
+//                                     value={remarks[assignment.id]?.comp_a_remarks ?? ""}
+//                                     onChange={(e) => handleRemarksChange(assignment.id, "comp_a_remarks", e.target.value)}
+//                                     className="w-full px-2 py-1 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 shadow-sm"
+//                                     placeholder="Remarks for Component A"
+//                                     required={calculatedQuantities[assignment.id]?.comp_a_qty !== null}
+//                                   />
+//                                 </div>
+//                               )}
+//                               {assignment.comp_ratio_b !== null && (
+//                                 <div className="space-y-1">
+//                                   <label className="text-xs font-medium text-gray-700">Component B</label>
+//                                   <input
+//                                     type="text"
+//                                     value={remarks[assignment.id]?.comp_b_remarks ?? ""}
+//                                     onChange={(e) => handleRemarksChange(assignment.id, "comp_b_remarks", e.target.value)}
+//                                     className="w-full px-2 py-1 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 shadow-sm"
+//                                     placeholder="Remarks for Component B"
+//                                     required={calculatedQuantities[assignment.id]?.comp_b_qty !== null}
+//                                   />
+//                                 </div>
+//                               )}
+//                               {assignment.comp_ratio_c !== null && (
+//                                 <div className="space-y-1">
+//                                   <label className="text-xs font-medium text-gray-700">Component C</label>
+//                                   <input
+//                                     type="text"
+//                                     value={remarks[assignment.id]?.comp_c_remarks ?? ""}
+//                                     onChange={(e) => handleRemarksChange(assignment.id, "comp_c_remarks", e.target.value)}
+//                                     className="w-full px-2 py-1 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 shadow-sm"
+//                                     placeholder="Remarks for Component C"
+//                                     required={calculatedQuantities[assignment.id]?.comp_c_qty !== null}
+//                                   />
+//                                 </div>
+//                               )}
+//                             </div>
 //                           </div>
-//                         )}
-//                         {assignment.comp_ratio_c !== null && (
-//                           <div className="space-y-1">
-//                             <label className="text-xs font-medium text-gray-700">Component C</label>
-//                             <input
-//                               type="text"
-//                               value={remarks[assignment.id]?.comp_c_remarks ?? ""}
-//                               onChange={(e) => handleRemarksChange(assignment.id, "comp_c_remarks", e.target.value)}
-//                               className="w-full px-2 py-1 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 shadow-sm"
-//                               placeholder="Remarks for Component C"
-//                               required={calculatedQuantities[assignment.id]?.comp_c_qty !== null}
-//                             />
-//                           </div>
-//                         )}
-//                       </div>
-//                     </div>
+//                         </div>
+//                       ))}
 //                   </div>
-//                 </div>
+//                 </details>
 //               ))}
 //               <div className="p-4 flex justify-end">
 //                 <button
 //                   onClick={() => setIsTransportModalOpen(true)}
 //                   className={`px-4 py-2 text-white rounded-lg text-sm font-medium shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-teal-500 ${
-//                     isAssignTransportEnabled()
+//                     isDispatchEnabled() && assignedMaterials.some(a => a.dispatch_status === "not-dispatched")
 //                       ? "bg-teal-600 hover:bg-teal-700"
 //                       : "bg-gray-400 cursor-not-allowed"
 //                   }`}
-//                   disabled={!isAssignTransportEnabled()}
+//                   disabled={!isDispatchEnabled() || !assignedMaterials.some(a => a.dispatch_status === "not-dispatched")}
 //                 >
 //                   <Truck className="h-4 w-4 inline-block mr-2" />
-//                   Assign Transport
+//                   Dispatch Materials
 //                 </button>
 //               </div>
 //             </div>
@@ -1147,226 +1195,207 @@
 //                   >
 //                     <X className="h-6 w-6" />
 //                   </button>
-//                   <h3 className="text-xl font-semibold text-gray-900 mb-6 text-center">Assign Transport Details</h3>
+//                   <h3 className="text-xl font-semibold text-gray-900 mb-6 text-center">Dispatch Materials</h3>
 //                   <div className="space-y-6">
-//                     {/* Transport Type */}
+//                     {/* Transport Details */}
 //                     <div>
-//                       <label className="block text-xs font-medium text-gray-600 mb-2">
-//                         Transport Type <span className="text-red-500">*</span>
-//                       </label>
-//                       <select
-//                         value={transportData.transport_type_id}
-//                         onChange={(e) => handleTransportChange("transport_type_id", e.target.value)}
-//                         className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm bg-white shadow-sm transition-all duration-200"
-//                         disabled={loading.transportTypes}
-//                       >
-//                         <option value="">Select Transport Type</option>
-//                         {transportTypes.map((type) => (
-//                           <option key={type.id} value={type.id}>
-//                             {type.type}
-//                           </option>
-//                         ))}
-//                       </select>
-//                       {loading.transportTypes && <Loader2 className="h-5 w-5 text-teal-500 animate-spin mt-2" />}
-//                     </div>
-
-//                     {/* Conditional Fields */}
-//                     {transportData.transport_type_id && (
-//                       <>
-//                         {/* Provider */}
+//                       <h4 className="text-lg font-medium text-gray-800 mb-4">Transport Details</h4>
+//                       <div className="space-y-4">
 //                         <div>
 //                           <label className="block text-xs font-medium text-gray-600 mb-2">
-//                             {isOwnVehicle ? "Contract Provider" : "Logistics Provider"} <span className="text-red-500">*</span>
+//                             Transport Type <span className="text-red-500">*</span>
 //                           </label>
-//                           <SearchableDropdown
-//                             options={providers}
-//                             selectedValue={transportData.provider_id}
-//                             onSelect={(value) => handleTransportChange("provider_id", value)}
-//                             placeholder={`Select or enter ${isOwnVehicle ? "Contract" : "Logistics"} Provider`}
-//                             searchKeys={["provider_name"]}
-//                             label="Provider"
-//                             disabled={!transportData.transport_type_id}
-//                             loading={loading.providers}
-//                             allowNew={true}
-//                             onNewEntryChange={(value) => handleNewEntryDropdown("provider_id", value)}
-//                           />
-//                           {transportData.provider_id && !providers.some((p) => p.id === transportData.provider_id) && (
-//                             <div className="mt-4 space-y-4">
-//                               <div>
-//                                 <label className="block text-xs font-medium text-gray-600 mb-2">
-//                                   Provider Address
-//                                 </label>
-//                                 <input
-//                                   type="text"
-//                                   value={newEntryData.provider_address}
-//                                   onChange={(e) => handleNewEntryChange("provider_address", e.target.value)}
-//                                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm"
-//                                   placeholder="Enter Provider Address"
-//                                 />
-//                               </div>
-//                               <div>
-//                                 <label className="block text-xs font-medium text-gray-600 mb-2">
-//                                   Provider Mobile
-//                                 </label>
-//                                 <input
-//                                   type="text"
-//                                   value={newEntryData.provider_mobile}
-//                                   onChange={(e) => handleNewEntryChange("provider_mobile", e.target.value)}
-//                                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm"
-//                                   placeholder="Enter Provider Mobile"
-//                                 />
-//                               </div>
-//                             </div>
-//                           )}
+//                           <select
+//                             value={transportData.transport_type_id}
+//                             onChange={(e) => handleTransportChange("transport_type_id", e.target.value)}
+//                             className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm bg-white shadow-sm transition-all duration-200"
+//                             disabled={loading.transportTypes}
+//                             required
+//                           >
+//                             <option value="">Select Transport Type</option>
+//                             {transportTypes.map((type) => (
+//                               <option key={type.id} value={type.id}>
+//                                 {type.type}
+//                               </option>
+//                             ))}
+//                           </select>
+//                           {loading.transportTypes && <Loader2 className="h-5 w-5 text-teal-500 animate-spin mt-2" />}
 //                         </div>
 
-//                         {/* Vehicle */}
-//                    <div>
-//   <label className="block text-xs font-medium text-gray-600 mb-2">
-//     Vehicle <span className="text-red-500">*</span>
-//   </label>
-//   <SearchableDropdown
-//     options={vehicles}
-//     selectedValue={transportData.vehicle_id}
-//     onSelect={(value) => handleTransportChange("vehicle_id", value)}
-//     placeholder="Select or enter Vehicle"
-//     searchKeys={["vehicle_name", "vehicle_number"]}
-//     label="Vehicle"
-//     loading={loading.vehicles}
-//     allowNew={true}
-//     onNewEntryChange={(value) => handleNewEntryDropdown("vehicle_id", value)}
-//   />
-//   {transportData.vehicle_id && !vehicles.some((v) => v.id === transportData.vehicle_id) && (
-//     <div className="mt-4 space-y-4">
-//       <div>
-//         <label className="block text-xs font-medium text-gray-600 mb-2">
-//           Vehicle Model
-//         </label>
-//         <input
-//           type="text"
-//           value={newEntryData.vehicle_model}
-//           onChange={(e) => handleNewEntryChange("vehicle_model", e.target.value)}
-//           className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm"
-//           placeholder="Enter Vehicle Model"
-//         />
-//       </div>
-//       <div>
-//         <label className="block text-xs font-medium text-gray-600 mb-2">
-//           Vehicle Number
-//         </label>
-//         <input
-//           type="text"
-//           value={newEntryData.vehicle_number}
-//           onChange={(e) => handleNewEntryChange("vehicle_number", e.target.value)}
-//           className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm"
-//           placeholder="Enter Vehicle Number"
-//         />
-//       </div>
-//     </div>
-//   )}
-// </div>
-
-//                         {/* Driver */}
-//                         <div>
-//                           <label className="block text-xs font-medium text-gray-600 mb-2">
-//                             Driver <span className="text-red-500">*</span>
-//                           </label>
-//                           <SearchableDropdown
-//                             options={drivers}
-//                             selectedValue={transportData.driver_id}
-//                             onSelect={(value) => handleTransportChange("driver_id", value)}
-//                             placeholder="Select or enter Driver"
-//                             searchKeys={["driver_name", "driver_mobile"]}
-//                             label="Driver"
-//                             loading={loading.drivers}
-//                             allowNew={true}
-//                             onNewEntryChange={(value) => handleNewEntryDropdown("driver_id", value)}
-//                           />
-//                           {transportData.driver_id && !drivers.some((d) => d.id === transportData.driver_id) && (
-//                             <div className="mt-4 space-y-4">
-//                               <div>
-//                                 <label className="block text-xs font-medium text-gray-600 mb-2">
-//                                   Driver Mobile
-//                                 </label>
-//                                 <input
-//                                   type="text"
-//                                   value={newEntryData.driver_mobile}
-//                                   onChange={(e) => handleNewEntryChange("driver_mobile", e.target.value)}
-//                                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm"
-//                                   placeholder="Enter Driver Mobile"
-//                                 />
-//                               </div>
-//                               <div>
-//                                 <label className="block text-xs font-medium text-gray-600 mb-2">
-//                                   Driver Address
-//                                 </label>
-//                                 <input
-//                                   type="text"
-//                                   value={newEntryData.driver_address}
-//                                   onChange={(e) => handleNewEntryChange("driver_address", e.target.value)}
-//                                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm"
-//                                   placeholder="Enter Driver Address"
-//                                 />
-//                               </div>
-//                             </div>
-//                           )}
-//                         </div>
-
-//                         {/* Destination */}
-//                         <div>
-//                           <label className="block text-xs font-medium text-gray-600" htmlFor="destination">
-//                             Destination <span className="text-red-500">*</span>
-//                           </label>
-//                           <input
-//                             type="text"
-//                             id="destination"
-//                             placeholder="Enter Destination"
-//                             value={transportData.destination}
-//                             onChange={(e) => handleTransportChange("destination", e.target.value)}
-//                             className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm transition-all duration-200"
-//                             aria-required="true"
-//                           />
-//                         </div>
-
-//                         {/* Expenses */}
-//                         <div className="grid grid-cols-2 gap-4">
-//                           {isOwnVehicle ? (
+//                         {transportData.transport_type_id && (
+//                           <>
 //                             <div>
-//                               <label className="block text-xs font-medium text-gray-600" htmlFor="travel_expense">
-//                                 Travel Expense <span className="text-red-500">*</span>
+//                               <label className="block text-xs font-medium text-gray-600 mb-2">
+//                                 {isOwnVehicle ? "Contract Provider" : "Logistics Provider"} <span className="text-red-500">*</span>
+//                               </label>
+//                               <SearchableDropdown
+//                                 options={providers}
+//                                 selectedValue={transportData.provider_id}
+//                                 onSelect={(value) => handleTransportChange("provider_id", value)}
+//                                 placeholder={`Select or enter ${isOwnVehicle ? "Contract" : "Logistics"} Provider`}
+//                                 searchKeys={["provider_name"]}
+//                                 label="Provider"
+//                                 disabled={!transportData.transport_type_id}
+//                                 loading={loading.providers}
+//                                 allowNew={true}
+//                                 onNewEntryChange={(value) => handleNewEntryDropdown("provider_id", value)}
+//                               />
+//                               {transportData.provider_id && !providers.some((p) => p.id === transportData.provider_id) && (
+//                                 <div className="mt-4 space-y-4">
+//                                   <div>
+//                                     <label className="block text-xs font-medium text-gray-600 mb-2">
+//                                       Provider Address
+//                                     </label>
+//                                     <input
+//                                       type="text"
+//                                       value={newEntryData.provider_address}
+//                                       onChange={(e) => handleNewEntryChange("provider_address", e.target.value)}
+//                                       className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm"
+//                                       placeholder="Enter Provider Address"
+//                                     />
+//                                   </div>
+//                                   <div>
+//                                     <label className="block text-xs font-medium text-gray-600 mb-2">
+//                                       Provider Mobile
+//                                     </label>
+//                                     <input
+//                                       type="text"
+//                                       value={newEntryData.provider_mobile}
+//                                       onChange={(e) => handleNewEntryChange("provider_mobile", e.target.value)}
+//                                       className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm"
+//                                       placeholder="Enter Provider Mobile"
+//                                     />
+//                                   </div>
+//                                 </div>
+//                               )}
+//                             </div>
+
+//                             <div>
+//                               <label className="block text-xs font-medium text-gray-600 mb-2">
+//                                 Vehicle <span className="text-red-500">*</span>
+//                               </label>
+//                               <SearchableDropdown
+//                                 options={vehicles}
+//                                 selectedValue={transportData.vehicle_id}
+//                                 onSelect={(value) => handleTransportChange("vehicle_id", value)}
+//                                 placeholder="Select or enter Vehicle"
+//                                 searchKeys={["vehicle_name", "vehicle_number"]}
+//                                 label="Vehicle"
+//                                 loading={loading.vehicles}
+//                                 allowNew={true}
+//                                 onNewEntryChange={(value) => handleNewEntryDropdown("vehicle_id", value)}
+//                               />
+//                               {transportData.vehicle_id && !vehicles.some((v) => v.id === transportData.vehicle_id) && (
+//                                 <div className="mt-4 space-y-4">
+//                                   <div>
+//                                     <label className="block text-xs font-medium text-gray-600 mb-2">
+//                                       Vehicle Model
+//                                     </label>
+//                                     <input
+//                                       type="text"
+//                                       value={newEntryData.vehicle_model}
+//                                       onChange={(e) => handleNewEntryChange("vehicle_model", e.target.value)}
+//                                       className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm"
+//                                       placeholder="Enter Vehicle Model"
+//                                     />
+//                                   </div>
+//                                   <div>
+//                                     <label className="block text-xs font-medium text-gray-600 mb-2">
+//                                       Vehicle Number
+//                                     </label>
+//                                     <input
+//                                       type="text"
+//                                       value={newEntryData.vehicle_number}
+//                                       onChange={(e) => handleNewEntryChange("vehicle_number", e.target.value)}
+//                                       className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm"
+//                                       placeholder="Enter Vehicle Number"
+//                                     />
+//                                   </div>
+//                                 </div>
+//                               )}
+//                             </div>
+
+//                             <div>
+//                               <label className="block text-xs font-medium text-gray-600 mb-2">
+//                                 Driver <span className="text-red-500">*</span>
+//                               </label>
+//                               <SearchableDropdown
+//                                 options={drivers}
+//                                 selectedValue={transportData.driver_id}
+//                                 onSelect={(value) => handleTransportChange("driver_id", value)}
+//                                 placeholder="Select or enter Driver"
+//                                 searchKeys={["driver_name", "driver_mobile"]}
+//                                 label="Driver"
+//                                 loading={loading.drivers}
+//                                 allowNew={true}
+//                                 onNewEntryChange={(value) => handleNewEntryDropdown("driver_id", value)}
+//                               />
+//                               {transportData.driver_id && !drivers.some((d) => d.id === transportData.driver_id) && (
+//                                 <div className="mt-4 space-y-4">
+//                                   <div>
+//                                     <label className="block text-xs font-medium text-gray-600 mb-2">
+//                                       Driver Mobile
+//                                     </label>
+//                                     <input
+//                                       type="text"
+//                                       value={newEntryData.driver_mobile}
+//                                       onChange={(e) => handleNewEntryChange("driver_mobile", e.target.value)}
+//                                       className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm"
+//                                       placeholder="Enter Driver Mobile"
+//                                     />
+//                                   </div>
+//                                   <div>
+//                                     <label className="block text-xs font-medium text-gray-600 mb-2">
+//                                       Driver Address
+//                                     </label>
+//                                     <input
+//                                       type="text"
+//                                       value={newEntryData.driver_address}
+//                                       onChange={(e) => handleNewEntryChange("driver_address", e.target.value)}
+//                                       className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm"
+//                                       placeholder="Enter Driver Address"
+//                                     />
+//                                   </div>
+//                                 </div>
+//                               )}
+//                             </div>
+
+//                             <div>
+//                               <label className="block text-xs font-medium text-gray-600 mb-2">
+//                                 Destination <span className="text-red-500">*</span>
 //                               </label>
 //                               <input
-//                                 type="number"
-//                                 id="travel_expense"
-//                                 placeholder="Enter Travel Expense"
-//                                 value={transportData.travel_expense}
-//                                 onChange={(e) => handleTransportChange("travel_expense", e.target.value)}
-//                                 className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm transition-all duration-200"
-//                                 aria-required="true"
-//                                 step="0.01"
-//                                 min="0"
+//                                 type="text"
+//                                 id="destination"
+//                                 placeholder="Enter Destination"
+//                                 value={transportData.destination}
+//                                 onChange={(e) => handleTransportChange("destination", e.target.value)}
+//                                 className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm"
+//                                 required
 //                               />
 //                             </div>
-//                           ) : (
-//                             <>
+
+//                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+//                               {!isOwnVehicle && (
+//                                 <div>
+//                                   <label className="block text-xs font-medium text-gray-600 mb-2">
+//                                     Booking Expense <span className="text-red-500">*</span>
+//                                   </label>
+//                                   <input
+//                                     type="number"
+//                                     id="booking_expense"
+//                                     placeholder="Enter Booking Expense"
+//                                     value={transportData.booking_expense}
+//                                     onChange={(e) => handleTransportChange("booking_expense", e.target.value)}
+//                                     className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm"
+//                                     step="0.01"
+//                                     min="0"
+//                                     required
+//                                   />
+//                                 </div>
+//                               )}
 //                               <div>
-//                                 <label className="block text-xs font-medium text-gray-600" htmlFor="booking_expense">
-//                                   Booking Expense <span className="text-red-500">*</span>
-//                                 </label>
-//                                 <input
-//                                   type="number"
-//                                   id="booking_expense"
-//                                   placeholder="Enter Booking Expense"
-//                                   value={transportData.booking_expense}
-//                                   onChange={(e) => handleTransportChange("booking_expense", e.target.value)}
-//                                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm transition-all duration-200"
-//                                   step="0.01"
-//                                   min="0"
-//                                   aria-required="true"
-//                                 />
-//                               </div>
-//                               <div>
-//                                 <label className="block text-xs font-medium text-gray-600" htmlFor="travel_expense">
+//                                 <label className="block text-xs font-medium text-gray-600 mb-2">
 //                                   Travel Expense <span className="text-red-500">*</span>
 //                                 </label>
 //                                 <input
@@ -1375,22 +1404,28 @@
 //                                   placeholder="Enter Travel Expense"
 //                                   value={transportData.travel_expense}
 //                                   onChange={(e) => handleTransportChange("travel_expense", e.target.value)}
-//                                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm transition-all duration-200"
+//                                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm"
 //                                   step="0.01"
 //                                   min="0"
-//                                   aria-required="true"
+//                                   required
 //                                 />
 //                               </div>
-//                             </>
-//                           )}
-//                         </div>
-//                       </>
-//                     )}
+//                             </div>
+//                           </>
+//                         )}
+//                       </div>
+//                     </div>
 //                   </div>
-//                   <div className="mt-6 flex justify-center">
+//                   <div className="mt-6 flex justify-center space-x-4">
+//                     <button
+//                       onClick={() => setIsTransportModalOpen(false)}
+//                       className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg text-base font-medium shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
+//                     >
+//                       Cancel
+//                     </button>
 //                     <button
 //                       onClick={handleDispatchSubmit}
-//                       className="px-6 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 text-base font-medium shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
+//                       className="px-6 py-3 bg-teal-600 text-white rounded-lg text-base font-medium shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-teal-500"
 //                       disabled={loading.submitting}
 //                     >
 //                       {loading.submitting ? (
@@ -1416,17 +1451,7 @@
 //   );
 // };
 
-// export default ViewAssignedMaterial;  
-
-
-
-
-
-
-
-
-
-
+// export default ViewAssignedMaterial;
 
 
 
@@ -1597,11 +1622,13 @@ const ViewAssignedMaterial = () => {
   const [sites, setSites] = useState([]);
   const [selectedProject, setSelectedProject] = useState("");
   const [selectedSite, setSelectedSite] = useState("");
+  const [nextDcNo, setNextDcNo] = useState("");
   const [assignedMaterials, setAssignedMaterials] = useState([]);
   const [groupedMaterials, setGroupedMaterials] = useState({});
   const [loading, setLoading] = useState({
     projects: false,
     sites: false,
+    dcNo: false,
     materials: false,
     transportTypes: false,
     providers: false,
@@ -1666,6 +1693,18 @@ const ViewAssignedMaterial = () => {
       setSites(response.data.data || []);
       if (response.data.data.length > 0 && !selectedSite) {
         setSelectedSite(response.data.data[0].site_id);
+        setDispatchData((prev) => ({
+          ...prev,
+          order_no: response.data.data[0].po_number || "",
+        }));
+      }
+      // Set vendor_code based on selected project
+      const selectedProjectData = projects.find((project) => project.pd_id === pd_id);
+      if (selectedProjectData) {
+        setDispatchData((prev) => ({
+          ...prev,
+          vendor_code: selectedProjectData.vendor_code || "",
+        }));
       }
     } catch (error) {
       console.error("Error fetching sites:", error);
@@ -1673,6 +1712,27 @@ const ViewAssignedMaterial = () => {
       setSites([]);
     } finally {
       setLoading((prev) => ({ ...prev, sites: false }));
+    }
+  };
+
+  // Fetch next DC No
+  const fetchNextDcNo = async () => {
+    if (!selectedSite) return;
+    try {
+      setLoading((prev) => ({ ...prev, dcNo: true }));
+      const response = await axios.get("http://localhost:5000/material/next-dc-no");
+      setNextDcNo(response.data.data.next_dc_no || "");
+      setDispatchData((prev) => ({
+        ...prev,
+        dc_no: response.data.data.next_dc_no || "",
+      }));
+    } catch (error) {
+      console.error("Error fetching next DC No:", error);
+      setError("Failed to load next DC No. Please try again.");
+      setNextDcNo("");
+      setDispatchData((prev) => ({ ...prev, dc_no: "" }));
+    } finally {
+      setLoading((prev) => ({ ...prev, dcNo: false }));
     }
   };
 
@@ -1809,6 +1869,7 @@ const ViewAssignedMaterial = () => {
     setGroupedMaterials({});
     setCalculatedQuantities({});
     setRemarks({});
+    setNextDcNo("");
     setDispatchData({ dc_no: "", dispatch_date: "", order_no: "", vendor_code: "" });
     setTransportData({
       transport_type_id: "",
@@ -1842,7 +1903,13 @@ const ViewAssignedMaterial = () => {
     setGroupedMaterials({});
     setCalculatedQuantities({});
     setRemarks({});
-    setDispatchData({ dc_no: "", dispatch_date: "", order_no: "", vendor_code: "" });
+    setNextDcNo("");
+    const selectedSiteData = sites.find((site) => site.site_id === site_id);
+    setDispatchData((prev) => ({
+      ...prev,
+      order_no: selectedSiteData ? selectedSiteData.po_number || "" : "",
+      dc_no: nextDcNo,
+    }));
     setTransportData({
       transport_type_id: "",
       provider_id: "",
@@ -2014,7 +2081,7 @@ const ViewAssignedMaterial = () => {
         .filter((assignment) => assignment.dispatch_status === "not-dispatched")
         .map((assignment) => ({
           material_assign_id: assignment.id,
-          desc_id: assignment.desc_id, // Include desc_id from assignment
+          desc_id: assignment.desc_id,
           dc_no: parseInt(dispatchData.dc_no),
           dispatch_date: dispatchData.dispatch_date,
           order_no: dispatchData.order_no,
@@ -2111,6 +2178,7 @@ const ViewAssignedMaterial = () => {
       if (Number.isInteger(parseInt(transportData.transport_type_id))) {
         await fetchProviders(transportData.transport_type_id);
       }
+      await fetchNextDcNo();
     } catch (error) {
       console.error("Error dispatching materials or saving transport:", error);
       const errorMessage =
@@ -2157,6 +2225,7 @@ const ViewAssignedMaterial = () => {
   useEffect(() => {
     if (selectedProject && selectedSite) {
       fetchAssignedMaterials();
+      fetchNextDcNo();
     }
   }, [selectedProject, selectedSite]);
 
@@ -2247,15 +2316,13 @@ const ViewAssignedMaterial = () => {
                 <label className="block text-xs font-medium text-gray-600" htmlFor="dc_no">
                   DC No <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="number"
-                  id="dc_no"
-                  placeholder="Enter DC No"
-                  value={dispatchData.dc_no}
-                  onChange={(e) => handleDispatchChange("dc_no", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm transition-all duration-200"
-                  aria-required="true"
-                />
+                <div className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-100 text-gray-700">
+                  {loading.dcNo ? (
+                    <Loader2 className="h-5 w-5 text-teal-500 animate-spin inline-block" />
+                  ) : (
+                    nextDcNo || "N/A"
+                  )}
+                </div>
               </div>
               <div className="w-full sm:w-1/4">
                 <label className="block text-xs font-medium text-gray-600" htmlFor="dispatch_date">
@@ -2274,29 +2341,17 @@ const ViewAssignedMaterial = () => {
                 <label className="block text-xs font-medium text-gray-600" htmlFor="order_no">
                   Order No <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
-                  id="order_no"
-                  placeholder="Enter Order No"
-                  value={dispatchData.order_no}
-                  onChange={(e) => handleDispatchChange("order_no", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm transition-all duration-200"
-                  aria-required="true"
-                />
+                <div className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-100 text-gray-700">
+                  {dispatchData.order_no || "N/A"}
+                </div>
               </div>
               <div className="w-full sm:w-1/4">
                 <label className="block text-xs font-medium text-gray-600" htmlFor="vendor_code">
                   Vendor Code <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
-                  id="vendor_code"
-                  placeholder="Enter Vendor Code"
-                  value={dispatchData.vendor_code}
-                  onChange={(e) => handleDispatchChange("vendor_code", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-sm transition-all duration-200"
-                  aria-required="true"
-                />
+                <div className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-100 text-gray-700">
+                  {dispatchData.vendor_code || "N/A"}
+                </div>
               </div>
             </div>
           </div>
